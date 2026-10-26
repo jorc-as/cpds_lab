@@ -1,0 +1,807 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage[hidelinks]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\setlist[itemize]{nosep}
+\setlist[enumerate]{nosep}
+
+% ============================================================
+% PLACEHOLDERS AND CODE STYLE
+% ============================================================
+\definecolor{todocolor}{RGB}{150,55,30}
+\definecolor{codebackground}{RGB}{247,247,247}
+\definecolor{codegreen}{RGB}{35,110,65}
+\definecolor{codeblue}{RGB}{35,70,145}
+
+\newcommand{\todo}[1]{%
+  \textcolor{todocolor}{\textit{[TODO: #1]}}%
+}
+\newcommand{\missing}{\textemdash}
+
+\lstdefinestyle{CStyle}{
+  language=C,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen},
+  stringstyle=\color{todocolor},
+  backgroundcolor=\color{codebackground},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{gray!35},
+  breaklines=true,
+  showstringspaces=false,
+  keepspaces=true,
+  columns=fullflexible,
+  tabsize=4
+}
+\lstset{style=CStyle}
+
+% Inserts an uploaded figure, or a placeholder if it is missing.
+% Usage:
+% \reportfigure{figures/example.png}{Caption}{fig:label}
+\newcommand{\reportfigure}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \IfFileExists{#1}{%
+      \includegraphics[
+        width=0.95\linewidth,
+        height=0.48\textheight,
+        keepaspectratio
+      ]{#1}%
+    }{%
+      \fbox{%
+        \parbox[c][3.5cm][c]{0.90\linewidth}{%
+          \centering
+          \textbf{Figure placeholder}\\[0.5em]
+          Upload the corresponding figure as\\[0.5em]
+          \texttt{\detokenize{#1}}
+        }%
+      }%
+    }
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+
+% Fill in every table using measured values.
+% Speedup and efficiency use the sequential baseline defined below.
+\newcommand{\performancetable}[2]{%
+  \begin{table}[htbp]
+    \centering
+    \caption{#1}
+    \label{#2}
+    \begin{tabular}{rrrr}
+      \toprule
+      Threads & Time (s) & Speedup & Efficiency (\%) \\
+      \midrule
+      1  & \missing & \missing & \missing \\
+      4  & \missing & \missing & \missing \\
+      8  & \missing & \missing & \missing \\
+      16 & \missing & \missing & \missing \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+}
+
+% ============================================================
+% DOCUMENT INFORMATION
+% ============================================================
+\title{
+  \textbf{CPDS Laboratory Assignment 2}\\[0.4em]
+  Parallel Programming with OpenMP\\
+  \large Solving the Heat Equation
+}
+\author{
+  Name Surname \and
+  Name Surname
+}
+\date{Fall 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+  \textbf{Group:} \todo{Group identifier}\\
+  \textbf{Submission date:} \todo{Date}
+\end{center}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Objectives and experimental setup}
+% ============================================================
+
+This report studies the parallelization of the Jacobi and
+Gauss--Seidel heat diffusion solvers using OpenMP. We evaluate
+correctness, strong scaling, synchronization overhead, and
+memory locality for the implemented versions.
+
+\subsection{Execution environment}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabularx}{\linewidth}{lX}
+    \toprule
+    Item & Configuration \\
+    \midrule
+    Machine / execution node & \todo{Hostname and processor model} \\
+    Available cores & \todo{Number of physical cores and SMT status} \\
+    Compiler & \todo{Compiler and version} \\
+    Compilation flags & \todo{Optimization and OpenMP flags} \\
+    Thread placement & \todo{Affinity settings, if configured} \\
+    Input configuration & \texttt{test.dat}; \todo{Any modifications} \\
+    Problem size & \todo{Value of \texttt{-s}} \\
+    Maximum iterations & \todo{Value of \texttt{-n}} \\
+    Residual threshold & \todo{Value of \texttt{-r}} \\
+    Timing method & \todo{Measurement method and repetitions} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Experimental configuration. Record differences between
+  correctness, scalability, tracing, and memory experiments.}
+  \label{tab:environment}
+\end{table}
+
+\subsection{Performance metrics}
+
+Let $T_{\mathrm{seq}}$ be the execution time of the original
+sequential implementation of the same solver, and let $T_p$
+be the time of the parallel version using $p$ threads.
+We define
+\[
+  S(p)=\frac{T_{\mathrm{seq}}}{T_p},
+  \qquad
+  E(p)=\frac{S(p)}{p}\times 100\%.
+\]
+
+If a plot instead uses the one-thread parallel execution as its
+baseline, we label it explicitly:
+\[
+  S_1(p)=\frac{T_1}{T_p}.
+\]
+
+For comparisons between two implementations at the same thread
+count, we use
+\[
+  G(p)=\frac{T_{\mathrm{before},p}}
+             {T_{\mathrm{after},p}}.
+\]
+
+\todo{State the baseline used in each supplied script or plot.
+Keep input, stopping conditions, and timing method consistent
+within each comparison.}
+
+\subsection{Implementation identifiers}
+
+\todo{Give every implementation a unique identifier and record
+its source filenames. Use these identifiers in figures and tables.}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{lXX}
+    \toprule
+    ID & Description & Source files \\
+    \midrule
+    J0 & Initial parallel Jacobi & \todo{Filenames} \\
+    J1 & Optimized parallel Jacobi & \todo{Filenames} \\
+    J2 & Further Jacobi optimization, if implemented
+       & \todo{Filenames or not implemented} \\
+    GT & Gauss--Seidel with explicit tasks & \todo{Filenames} \\
+    GD & Gauss--Seidel with do-across & \todo{Filenames} \\
+    GD-opt & Tuned do-across version & \todo{Filenames} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Implemented versions. Adjust this list to match the work.}
+  \label{tab:versions}
+\end{table}
+
+% ============================================================
+\section{Sequential reference and correctness}
+% ============================================================
+
+\subsection{Sequential Jacobi and Gauss--Seidel}
+
+\todo{Describe how the two solvers update the matrix, the role
+of the temporary matrix in Jacobi, and the stopping conditions.}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Solver & Time (s) & Iterations & Final residual \\
+    \midrule
+    Jacobi & \missing & \missing & \missing \\
+    Gauss--Seidel & \missing & \missing & \missing \\
+    \bottomrule
+  \end{tabular}
+  \caption{Sequential reference results for the stated configuration.}
+  \label{tab:sequential}
+\end{table}
+
+\todo{Describe the observed differences between the two
+sequential results. Preserve each solver's original PPM output.}
+
+\subsection{Validation procedure}
+
+Each parallel implementation is compared with the original
+sequential implementation of the \emph{same solver}, using
+matching input and stopping conditions.
+
+\todo{Report visual inspection, PPM file comparison, iteration
+counts, and final residuals. Explain any differences observed;
+do not assume that a visually similar image proves correctness.}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{llrrX}
+    \toprule
+    Version & Threads & Iterations & Residual & PPM comparison \\
+    \midrule
+    J0 & 1  & \missing & \missing & \todo{Result} \\
+    J0 & 8  & \missing & \missing & \todo{Result} \\
+    J1 & 16 & \missing & \missing & \todo{Result} \\
+    GT & \todo{Threads} & \missing & \missing & \todo{Result} \\
+    GD & \todo{Threads} & \missing & \missing & \todo{Result} \\
+    GD-opt & 16 & \missing & \missing & \todo{Result} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Correctness checks. Add rows for all tested versions
+  and relevant block configurations.}
+  \label{tab:validation}
+\end{table}
+
+\FloatBarrier
+
+% ============================================================
+\section{Dependency analysis with Tareador}
+% ============================================================
+
+\subsection{Decompositions explored}
+
+\todo{For each explored decomposition, identify the source
+version, task boundaries, task names, input size, number of
+iterations, and simulated processor count.}
+
+\todo{Explain the treatment of the residual accumulation
+variable \texttt{sum}. Distinguish dependencies excluded from
+the Tareador analysis from dependencies that the actual
+OpenMP implementation must handle correctly.}
+
+\subsection{Jacobi}
+
+\todo{Describe dependencies within one solver invocation,
+between solving and copying, and between consecutive iterations.
+Explain the available parallelism and any sequential regions.}
+
+\reportfigure
+  {figures/jacobi-tdg.png}
+  {Jacobi task dependency graph.
+   Specify the exact decomposition and source version.}
+  {fig:jacobi-tdg}
+
+\reportfigure
+  {figures/jacobi-simulation.png}
+  {Simulated Jacobi execution.
+   Specify the processor count and simulation configuration.}
+  {fig:jacobi-simulation}
+
+\todo{Interpret the graph and simulated execution.
+Explain whether enough processors were used to expose the
+parallelism and where the critical path appears.}
+
+\subsection{Gauss--Seidel}
+
+\todo{Identify dependencies caused by in-place updates.
+Explain their direction, their effect on execution order,
+and the resulting block-level wavefront.}
+
+\reportfigure
+  {figures/gauss-tdg.png}
+  {Gauss--Seidel task dependency graph.
+   Specify the exact decomposition and source version.}
+  {fig:gauss-tdg}
+
+\reportfigure
+  {figures/gauss-simulation.png}
+  {Simulated Gauss--Seidel execution.
+   Specify the processor count and simulation configuration.}
+  {fig:gauss-simulation}
+
+\todo{Compare the available parallelism with Jacobi.
+Repeat the graph and simulation pair for every additional
+decomposition explored.}
+
+\FloatBarrier
+
+% ============================================================
+\section{Parallel Jacobi}
+% ============================================================
+
+\subsection{Initial data decomposition}
+
+
+
+Using istart and iend we get the first and final indexes of the rows we have to operate with. As we have to leave a halo, we take the maximum between 1 and istart in the case of istart being 0 (first block). In the case we are in the last block, we iterate until we arrive to the iend or sizex-2 (last row - 1). 
+
+Macros are the ones handling the even splitting in this case.
+
+We keep private tmp and diff so no other threads are writing in the same variables, while we keep the same public as the index we are addressing is different (the case of u, for example). 
+We use reduction for sum.
+
+
+
+% The assignment requires explicit work assignment using
+% OpenMP intrinsic functions for this Jacobi decomposition.
+% Do not replace that requirement with omp for or explicit tasks.
+\begin{lstlisting}[caption={Initial parallel Jacobi implementation.}]
+ #pragma omp parallel private(tmp, diff) reduction(+:sum) 
+        {
+
+                int blocki=omp_get_thread_num();
+                int nblocksi=omp_get_num_threads();
+        
+                int i_start = lowerb(blocki, nblocksi, sizex);
+                int i_end = upperb(blocki, nblocksi, sizex);
+                
+                
+                for (int i = max(1, i_start); i<= min(sizex-2, i_end); i++){
+                        for (int j = 1; j<sizey-1; j++){
+                                tmp = 0.25 * ( u[ i*sizey          + (j-1) ] +  // left
+                                    u[ i*sizey     + (j+1) ] +  // right
+                                    u[ (i-1)*sizey + j     ] +  // top
+                                    u[ (i+1)*sizey + j     ] ); // bottom
+                                diff = tmp - u[i*sizey+ j];
+                                sum += diff * diff;
+                                unew[i*sizey+j] = tmp;
+          
+        
+                        }
+                }       
+                
+                
+        }       
+\end{lstlisting}
+
+\todo{Summarize validation with 1 and 8 threads and refer
+to Table~\ref{tab:validation}.}
+
+\subsection{Overall analysis of the initial version}
+
+\todo{Record the tracing configuration. The assignment's
+provided tracing script uses 1, 4, 8, and 16 threads,
+with \texttt{-s 1022} and \texttt{-n 1000}. Verify the
+configuration actually used.}
+
+\reportfigure
+  {figures/jacobi-initial-modelfactors.pdf}
+  {Model-factor tables for the initial Jacobi implementation.}
+  {fig:jacobi-initial-mf}
+
+\todo{Assess scalability. Identify the metric that should
+be addressed first, quote its measured values, and explain
+why it limits performance.}
+
+\subsection{Detailed analysis of the initial version}
+
+\reportfigure
+  {figures/jacobi-initial-paraver.png}
+  {Initial Jacobi execution with 16 threads: synchronized
+   Paraver views of instantaneous parallelism and implicit tasks.}
+  {fig:jacobi-initial-paraver}
+
+\todo{Identify the code region responsible for the low
+parallel fraction. Relate the timeline to work performed
+between solver iterations and to the Tareador analysis.}
+
+\subsection{Optimization}
+
+\begin{lstlisting}[caption={Changes in the optimized Jacobi version.}]
+void copy_mat (double *u, double *v, unsigned sizex, unsigned sizey) {
+
+    #pragma omp parallel
+{
+
+    int n_blocks = omp_get_num_threads();
+    int blocki = omp_get_thread_num();
+
+    int start_i = lowerb(blocki, n_blocks, sizex);
+    int end_i = upperb(blocki, n_blocks,sizex); 
+
+    for (int i = max(1, start_i); i <= min(sizex - 2, end_i) ; i++) {
+        for (int j = 1; j < sizey - 1; j++) {
+            v[i * sizey + j] = u[i * sizey + j];
+        }
+    }
+
+}
+}
+
+\end{lstlisting}
+
+\todo{Report correctness validation with 16 threads.}
+
+\subsection{Overall analysis of the optimized version}
+
+\performancetable
+  {Optimized Jacobi performance. State the sequential baseline.}
+  {tab:jacobi-optimized}
+
+\reportfigure
+  {figures/jacobi-optimized-modelfactors.pdf}
+  {Model-factor tables for the optimized Jacobi implementation.}
+  {fig:jacobi-optimized-mf}
+
+\reportfigure
+  {figures/jacobi-scalability.pdf}
+  {Jacobi strong scalability. Clearly identify the versions
+   and speedup baseline.}
+  {fig:jacobi-scalability}
+
+\todo{Did execution time decrease? Did scalability improve?
+Did the parallel fraction increase? Support each answer
+with measured values.}
+
+The improvement over the initial implementation at 16 threads is
+\[
+  G_{\mathrm{Jacobi}}(16)
+  =\frac{T_{\mathrm{J0},16}}{T_{\mathrm{J1},16}}
+  =\todo{Measured ratio}.
+\]
+
+\todo{If apparently superlinear speedups occur, discuss
+measurement precision and other explanations supported
+by the available evidence.}
+
+\subsection{Detailed analysis of the optimized version}
+
+\reportfigure
+  {figures/jacobi-optimized-paraver.png}
+  {Optimized Jacobi execution with 16 threads.}
+  {fig:jacobi-optimized-paraver}
+
+\todo{Compare equivalent time windows from the initial and
+optimized executions. Explain what improved and which
+bottlenecks remain.}
+
+\subsection{Further optimization, if implemented}
+
+\todo{Describe the optimization suggested by the input/output
+matrix-address hint. Explain how matrix ownership, boundary
+values, and final output correctness are preserved. If this
+version was not implemented, state that and remove the
+unused figure below.}
+
+\begin{lstlisting}[caption={Further Jacobi optimization, if implemented.}]
+ case 0: // JACOBI
+                    residual = solve(param.u, param.uhelp, np, np);
+                    residual = solve(param.uhelp, param.u, np, np);
+                    // Copy uhelp into u
+                    //copy_mat(param.uhelp, param.u, np, np);
+                    break;
+
+\end{lstlisting}
+
+\todo{Report correctness, execution time, and improvement
+relative to J1 under matching conditions.}
+
+\reportfigure
+  {figures/jacobi-further-paraver.png}
+  {Timeline for the further Jacobi optimization, if implemented.}
+  {fig:jacobi-further-paraver}
+
+\FloatBarrier
+
+% ============================================================
+\section{Parallel Gauss--Seidel}
+% ============================================================
+
+\subsection{Blocking and dependency structure}
+
+\todo{Define the block layout, traversal order, and handling
+of incomplete boundary blocks. Explain why synchronization
+between blocks is needed and how it enables wavefront
+parallelism.}
+
+\subsection{Task decomposition with explicit dependencies}
+
+\todo{Describe task creation, task granularity, dependency
+locators, data-sharing attributes, residual accumulation,
+and completion before the next solver iteration.}
+
+\begin{lstlisting}[caption={Gauss--Seidel with explicit tasks.}]
+/* Paste the relevant implementation using:
+   #pragma omp task depend(...)
+
+   Include enough surrounding code to explain task creation,
+   block indexing, dependencies, and synchronization.
+*/
+\end{lstlisting}
+
+\todo{Explain why the declared dependencies match the
+algorithm's dependencies. Report correctness validation.}
+
+\performancetable
+  {Gauss--Seidel performance with explicit tasks.}
+  {tab:gauss-tasks}
+
+\reportfigure
+  {figures/gauss-tasks-scalability.pdf}
+  {Strong scalability of Gauss--Seidel with explicit tasks.}
+  {fig:gauss-tasks-scalability}
+
+\reportfigure
+  {figures/gauss-tasks-modelfactors.pdf}
+  {Model-factor tables for Gauss--Seidel with explicit tasks.}
+  {fig:gauss-tasks-mf}
+
+\reportfigure
+  {figures/gauss-tasks-paraver.png}
+  {Paraver timeline for Gauss--Seidel with explicit tasks.}
+  {fig:gauss-tasks-paraver}
+
+\todo{Explain scaling using measured model factors and
+timeline evidence. Discuss task overhead, dependency waits,
+and load balance where supported by the observations.
+Summarize memory results from Section~\ref{sec:memory}.}
+
+\subsection{Data decomposition with do-across}
+
+\todo{Describe the row ownership, column blocking, and use
+of implicit tasks. Explain the ordered iteration space and
+the source/sink dependencies.}
+
+\begin{lstlisting}[caption={Gauss--Seidel with do-across.}]
+/* Paste the relevant implementation using:
+   ordered + depend(sink, ...)
+   ordered + depend(source)
+
+   Include loop structure, scheduling, and block calculations.
+*/
+\end{lstlisting}
+
+\todo{Explain how the implementation preserves dependencies
+and the intended geometric row decomposition. Report
+correctness validation.}
+
+\performancetable
+  {Gauss--Seidel performance with the initial do-across version.}
+  {tab:gauss-doacross}
+
+\reportfigure
+  {figures/gauss-doacross-scalability.pdf}
+  {Strong scalability of the initial do-across implementation.}
+  {fig:gauss-doacross-scalability}
+
+\reportfigure
+  {figures/gauss-doacross-modelfactors.pdf}
+  {Model-factor tables for the initial do-across implementation.}
+  {fig:gauss-doacross-mf}
+
+\reportfigure
+  {figures/gauss-doacross-paraver.png}
+  {Paraver timeline for the initial do-across implementation.}
+  {fig:gauss-doacross-paraver}
+
+\todo{Explain the important performance metrics and compare
+this version with explicit tasks under matching conditions.}
+
+\FloatBarrier
+
+% ============================================================
+\section{Gauss--Seidel block-count tuning}
+% ============================================================
+
+\subsection{Configurable number of column blocks}
+
+The assignment specifies
+\[
+  n_{\mathrm{blocks},j}
+  = n_{\mathrm{blocks},i}\times \texttt{userparam}.
+\]
+
+\todo{Explain how the \texttt{-u} argument controls this
+relationship and how the code handles block sizes and edges.}
+
+\begin{lstlisting}[caption={Configurable Gauss--Seidel blocking.}]
+/* Paste the changes that use userparam to set the number
+   of blocks in the j dimension. */
+\end{lstlisting}
+
+\todo{Explain how increasing the number of column blocks
+changes the available parallelism, computation per block,
+and frequency of synchronization.}
+
+\subsection{Parameter exploration with 16 threads}
+
+\todo{Describe the values explored using
+\texttt{submit-userparam-omp.sh}, with 16 threads.
+Record the input and timing method.}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    \texttt{userparam} &
+    Row blocks &
+    Column blocks &
+    Time (s) \\
+    \midrule
+    \missing & \missing & \missing & \missing \\
+    \missing & \missing & \missing & \missing \\
+    \missing & \missing & \missing & \missing \\
+    \missing & \missing & \missing & \missing \\
+    \bottomrule
+  \end{tabular}
+  \caption{Block-count exploration with 16 threads.
+  Add rows for all tested parameter values.}
+  \label{tab:block-tuning}
+\end{table}
+
+\reportfigure
+  {figures/gauss-userparam.pdf}
+  {Effect of the block-count parameter on Gauss--Seidel
+   performance with 16 threads.}
+  {fig:gauss-userparam}
+
+Selected parameter:
+\[
+  \texttt{userparam}=\todo{Selected value}.
+\]
+
+\todo{Justify the selected value using the measurements.
+Discuss the balance between concurrency and synchronization.
+Report correctness for the tested configurations.}
+
+\subsection{Overall analysis after tuning}
+
+\todo{Confirm that the selected parameter was set consistently
+in the strong-scaling and Extrae scripts. State how block
+counts change as the number of threads changes.}
+
+\performancetable
+  {Performance of the tuned Gauss--Seidel implementation.}
+  {tab:gauss-tuned}
+
+\reportfigure
+  {figures/gauss-tuned-scalability.pdf}
+  {Strong scalability after block-count tuning.}
+  {fig:gauss-tuned-scalability}
+
+\reportfigure
+  {figures/gauss-tuned-modelfactors.pdf}
+  {Model-factor tables after block-count tuning.}
+  {fig:gauss-tuned-mf}
+
+\reportfigure
+  {figures/gauss-tuned-paraver.png}
+  {Tuned Gauss--Seidel execution with 16 threads.}
+  {fig:gauss-tuned-paraver}
+
+\todo{Is speedup approximately linear? Explain the result
+using specific model-factor values and timeline observations.
+Quantify the improvement over the initial do-across version.}
+
+\FloatBarrier
+
+% ============================================================
+\section{Memory hierarchy analysis}
+\label{sec:memory}
+% ============================================================
+
+\subsection{Measurement configuration}
+
+\todo{Describe the measurements from
+\texttt{submit-strong-memory.sh}. Identify the versions,
+thread counts, block parameters, input, and execution node.
+Compare explicit tasks with at least one data decomposition.}
+
+\subsection{L2 cache misses}
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{lrrrr}
+    \toprule
+    Version & Threads & Total L2 misses &
+    Misses/thread & Time (s) \\
+    \midrule
+    GT & 1  & \missing & \missing & \missing \\
+    GT & 4  & \missing & \missing & \missing \\
+    GT & 8  & \missing & \missing & \missing \\
+    GT & 16 & \missing & \missing & \missing \\
+    \midrule
+    GD-opt & 1  & \missing & \missing & \missing \\
+    GD-opt & 4  & \missing & \missing & \missing \\
+    GD-opt & 8  & \missing & \missing & \missing \\
+    GD-opt & 16 & \missing & \missing & \missing \\
+    \bottomrule
+  \end{tabular}
+  \caption{Memory measurements for explicit tasks and data
+  decomposition. Identify the timing source and adjust rows
+  to match the experiments performed.}
+  \label{tab:memory}
+\end{table}
+
+\todo{Use the overall and average-per-thread counts reported
+by the measurement output. Identify any differences in
+completed iterations or total work that affect comparability.}
+
+\subsection{Interpretation}
+
+\todo{Are the differences in L2 misses substantial?
+Discuss data ownership, task scheduling, reuse, and locality
+using the implementation and measurements as evidence.}
+
+\todo{Do the differences in cache misses correspond to
+execution-time differences? Explain the relationship while
+also considering synchronization, task overhead, and
+available parallelism.}
+
+\FloatBarrier
+
+% ============================================================
+\section{Conclusions}
+% ============================================================
+
+\todo{Summarize the main findings with measured values:
+the best Jacobi version, the effect of its optimizations,
+the comparison between the Gauss--Seidel decompositions,
+the selected block parameter, and the memory-analysis result.}
+
+\todo{State the remaining performance limitations and the
+extent to which the results depend on problem size,
+thread count, and measurement precision.}
+
+% ============================================================
+% OPTIONAL APPENDICES
+% Delete these sections if they are not part of your report.
+% ============================================================
+\appendix
+
+\section{Additional preparation exercises}
+
+\todo{If included, explain block, cyclic, and block-cyclic
+data decompositions, the owner-computes rule, and balanced
+row assignment when the number of rows is not divisible
+by the number of threads.}
+
+\section{Custom synchronization exercise}
+
+\todo{If the annex exercise is included, describe the
+synchronization state and how it is reset or advanced across
+iterations. Justify visibility and ordering requirements.}
+
+\todo{Discuss whether adjacent synchronization variables
+can cause false sharing and explain a possible mitigation.}
+
+% Submission reminder:
+% Submit the report PDF and a separate ZIP containing only
+% the parallel C source files, with meaningful version names.
+% Include every group member's name on the title page.
+% Remove all TODOs and unused optional sections before submission.
+
+\end{document}
