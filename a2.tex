@@ -27,22 +27,16 @@
 % ============================================================
 % PLACEHOLDERS AND CODE STYLE
 % ============================================================
-\definecolor{todocolor}{RGB}{150,55,30}
 \definecolor{codebackground}{RGB}{247,247,247}
 \definecolor{codegreen}{RGB}{35,110,65}
 \definecolor{codeblue}{RGB}{35,70,145}
-
-\newcommand{\todo}[1]{%
-  \textcolor{todocolor}{\textit{[TODO: #1]}}%
-}
-\newcommand{\missing}{\textemdash}
 
 \lstdefinestyle{CStyle}{
   language=C,
   basicstyle=\ttfamily\footnotesize,
   keywordstyle=\color{codeblue}\bfseries,
   commentstyle=\color{codegreen},
-  stringstyle=\color{todocolor},
+  stringstyle=\color{codegreen},
   backgroundcolor=\color{codebackground},
   numbers=left,
   numberstyle=\tiny\color{gray},
@@ -65,8 +59,8 @@
     \centering
     \IfFileExists{#1}{%
       \includegraphics[
-        width=0.95\linewidth,
-        height=0.48\textheight,
+        width=\linewidth,
+        height=0.5\textheight,
         keepaspectratio
       ]{#1}%
     }{%
@@ -84,26 +78,6 @@
   \end{figure}
 }
 
-% Fill in every table using measured values.
-% Speedup and efficiency use the sequential baseline defined below.
-\newcommand{\performancetable}[2]{%
-  \begin{table}[htbp]
-    \centering
-    \caption{#1}
-    \label{#2}
-    \begin{tabular}{rrrr}
-      \toprule
-      Threads & Time (s) & Speedup & Efficiency (\%) \\
-      \midrule
-      1  & \missing & \missing & \missing \\
-      4  & \missing & \missing & \missing \\
-      8  & \missing & \missing & \missing \\
-      16 & \missing & \missing & \missing \\
-      \bottomrule
-    \end{tabular}
-  \end{table}
-}
-
 % ============================================================
 % DOCUMENT INFORMATION
 % ============================================================
@@ -113,8 +87,7 @@
   \large Solving the Heat Equation
 }
 \author{
-  Name Surname \and
-  Name Surname
+  Group member names not provided
 }
 \date{Fall 2026}
 
@@ -123,8 +96,8 @@
 \maketitle
 
 \begin{center}
-  \textbf{Group:} \todo{Group identifier}\\
-  \textbf{Submission date:} \todo{Date}
+  \textbf{Group:} Not recorded\\
+  \textbf{Submission date:} Not recorded
 \end{center}
 
 \tableofcontents
@@ -147,20 +120,20 @@ memory locality for the implemented versions.
     \toprule
     Item & Configuration \\
     \midrule
-    Machine / execution node & \todo{Hostname and processor model} \\
-    Available cores & \todo{Number of physical cores and SMT status} \\
-    Compiler & \todo{Compiler and version} \\
-    Compilation flags & \todo{Optimization and OpenMP flags} \\
-    Thread placement & \todo{Affinity settings, if configured} \\
-    Input configuration & \texttt{test.dat}; \todo{Any modifications} \\
-    Problem size & \todo{Value of \texttt{-s}} \\
-    Maximum iterations & \todo{Value of \texttt{-n}} \\
-    Residual threshold & \todo{Value of \texttt{-r}} \\
-    Timing method & \todo{Measurement method and repetitions} \\
+    Machine / execution node & \texttt{cpds1101} (recorded in Extrae table captions); processor model not recorded \\
+    Available cores & 1, 4, 8, and 16 workers were measured; physical-core and SMT layout not recorded \\
+    Compiler & Not recorded in the retained auxiliary files \\
+    Compilation flags & Not recorded in the retained auxiliary files \\
+    Thread placement & Not recorded in the retained auxiliary files \\
+    Input configuration & Two heat sources; input filename and any changes not recorded \\
+    Problem size & \texttt{-s 1022} in the user-parameter sweep \\
+    Maximum iterations & \texttt{-n 1000} in the user-parameter sweep and 1000 solver invocations in traces \\
+    Residual threshold & \texttt{-r 0.00005} in the user-parameter sweep \\
+    Timing method & Extrae whole-program elapsed times for trace runs; ordinary elapsed-time output for the parameter sweep; repetitions not recorded \\
     \bottomrule
   \end{tabularx}
-  \caption{Experimental configuration. Record differences between
-  correctness, scalability, tracing, and memory experiments.}
+  \caption{Experimental facts recoverable from the retained auxiliary
+  files; unavailable configuration details are identified in the table.}
   \label{tab:environment}
 \end{table}
 
@@ -189,14 +162,20 @@ count, we use
              {T_{\mathrm{after},p}}.
 \]
 
-\todo{State the baseline used in each supplied script or plot.
-Keep input, stopping conditions, and timing method consistent
-within each comparison.}
+The retained Extrae model-factor outputs report whole-program elapsed
+times for 1, 4, 8, and 16 workers. Their speedup and efficiency use the
+one-worker run of the same version as the baseline, not a separately
+measured sequential executable. The parameter sweep reports ordinary
+runtime for 16 workers. The two timing sources are kept distinct below.
+The sweep reached its 1000-iteration limit with residual 0.023071,
+above the requested threshold 0.00005; it therefore did not converge
+to that threshold.
 
 \subsection{Implementation identifiers}
 
-\todo{Give every implementation a unique identifier and record
-its source filenames. Use these identifiers in figures and tables.}
+The identifiers below follow the versioned source and trace directories
+in \texttt{aux/}. The source files combine Jacobi with one of the
+Gauss--Seidel implementations.
 
 \begin{table}[htbp]
   \centering
@@ -205,18 +184,23 @@ its source filenames. Use these identifiers in figures and tables.}
     \toprule
     ID & Description & Source files \\
     \midrule
-    J0 & Initial parallel Jacobi & \todo{Filenames} \\
-    J1 & Optimized parallel Jacobi & \todo{Filenames} \\
-    J2 & Further Jacobi optimization, if implemented
-       & \todo{Filenames or not implemented} \\
-    GT & Gauss--Seidel with explicit tasks & \todo{Filenames} \\
-    GD & Gauss--Seidel with do-across & \todo{Filenames} \\
-    GD-opt & Tuned do-across version & \todo{Filenames} \\
+    J0 & Initial parallel Jacobi & v1 source \\
+    J1 & Optimized parallel Jacobi & v2 source \\
+    J2 & Jacobi with alternating input/output pointers & v3 source \\
+    GT & Gauss--Seidel with explicit tasks & v1 source \\
+    GD & Gauss--Seidel with do-across & v2 source \\
+    GD-opt & Do-across with configurable column blocks & v3 source \\
     \bottomrule
   \end{tabularx}
-  \caption{Implemented versions. Adjust this list to match the work.}
+  \caption{Jacobi and Gauss--Seidel variants identified by the auxiliary
+  source-version directories.}
   \label{tab:versions}
 \end{table}
+
+Source basenames, in v1/v2/v3 order:\\
+\url{solver-jacobi-parallel-gauss-explicit.c}\\
+\url{solver-jacobi-optimized-gauss-do-across.c}\\
+\url{solver-omp.c}
 
 % ============================================================
 \section{Sequential reference and correctness}
@@ -224,8 +208,14 @@ its source filenames. Use these identifiers in figures and tables.}
 
 \subsection{Sequential Jacobi and Gauss--Seidel}
 
-\todo{Describe how the two solvers update the matrix, the role
-of the temporary matrix in Jacobi, and the stopping conditions.}
+Jacobi reads each iteration from one matrix and writes the new interior
+values to a separate matrix, so every update uses the previous iteration's
+neighbour values. The boundary cells are not updated. Gauss--Seidel
+updates the matrix in place in row-major order; later cells in the sweep
+can therefore observe values written earlier in that same iteration.
+The driver stops when the residual is below the requested threshold or
+when the maximum iteration count is reached (\texttt{-n 0} disables the
+iteration limit in the supplied driver).
 
 \begin{table}[htbp]
   \centering
@@ -233,16 +223,17 @@ of the temporary matrix in Jacobi, and the stopping conditions.}
     \toprule
     Solver & Time (s) & Iterations & Final residual \\
     \midrule
-    Jacobi & \missing & \missing & \missing \\
-    Gauss--Seidel & \missing & \missing & \missing \\
+    Jacobi & Not recorded & Not recorded & Not recorded \\
+    Gauss--Seidel & Not recorded & Not recorded & Not recorded \\
     \bottomrule
   \end{tabular}
   \caption{Sequential reference results for the stated configuration.}
   \label{tab:sequential}
 \end{table}
 
-\todo{Describe the observed differences between the two
-sequential results. Preserve each solver's original PPM output.}
+No sequential-reference timings, iteration/residual logs, or PPM files
+are present in the retained auxiliary files, so the sequential results
+and output-image comparison cannot be reconstructed here.
 
 \subsection{Validation procedure}
 
@@ -250,9 +241,10 @@ Each parallel implementation is compared with the original
 sequential implementation of the \emph{same solver}, using
 matching input and stopping conditions.
 
-\todo{Report visual inspection, PPM file comparison, iteration
-counts, and final residuals. Explain any differences observed;
-do not assume that a visually similar image proves correctness.}
+The trace and sweep artifacts do not contain paired sequential/parallel
+PPM outputs or a correctness log. Consequently, the numerical equivalence
+of each parallel version remains unverified by the retained evidence;
+the model-factor traces demonstrate execution, not correctness.
 
 \begin{table}[htbp]
   \centering
@@ -261,16 +253,16 @@ do not assume that a visually similar image proves correctness.}
     \toprule
     Version & Threads & Iterations & Residual & PPM comparison \\
     \midrule
-    J0 & 1  & \missing & \missing & \todo{Result} \\
-    J0 & 8  & \missing & \missing & \todo{Result} \\
-    J1 & 16 & \missing & \missing & \todo{Result} \\
-    GT & \todo{Threads} & \missing & \missing & \todo{Result} \\
-    GD & \todo{Threads} & \missing & \missing & \todo{Result} \\
-    GD-opt & 16 & \missing & \missing & \todo{Result} \\
+    J0 & 1, 8 & Not recorded & Not recorded & No PPM or comparison log retained \\
+    J1 & 16 & Not recorded & Not recorded & No PPM or comparison log retained \\
+    J2 & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
+    GT & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
+    GD & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
+    GD-opt & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
     \bottomrule
   \end{tabularx}
-  \caption{Correctness checks. Add rows for all tested versions
-  and relevant block configurations.}
+  \caption{Configurations listed for validation in the draft. No
+  pass/fail or PPM-comparison results were retained.}
   \label{tab:validation}
 \end{table}
 
@@ -282,58 +274,64 @@ do not assume that a visually similar image proves correctness.}
 
 \subsection{Decompositions explored}
 
-\todo{For each explored decomposition, identify the source
-version, task boundaries, task names, input size, number of
-iterations, and simulated processor count.}
+Tareador graph PDFs are retained for the Jacobi and Gauss--Seidel
+examples under \texttt{tdg/}. The filenames distinguish the vanilla and
+modified graph; the graph-generation command, exact problem size, and
+simulation processor count were not retained. The modified Jacobi graph
+shows potential tasks inside a solver invocation, while the vanilla graph
+also shows the separate \texttt{copy\_mat} call.
 
-\todo{Explain the treatment of the residual accumulation
-variable \texttt{sum}. Distinguish dependencies excluded from
-the Tareador analysis from dependencies that the actual
-OpenMP implementation must handle correctly.}
+The residual \texttt{sum} is a reduction in the OpenMP code. Any
+dependencies deliberately omitted while exposing independent work to
+Tareador must not be omitted from the real solver: the actual reduction
+still needs a valid reduction or equivalent synchronization, and every
+matrix dependency that protects a read-after-write must be preserved.
 
 \subsection{Jacobi}
 
-\todo{Describe dependencies within one solver invocation,
-between solving and copying, and between consecutive iterations.
-Explain the available parallelism and any sequential regions.}
+Within a Jacobi solve, all cells read only the old matrix and write
+distinct interior cells in the new matrix, so cells can be computed
+independently; only the residual reduction is shared. A copy from the
+new matrix back to the old one (if used) must complete before the next
+solve, and each iteration must complete before the following iteration
+reads its result. These phase boundaries and repeated parallel-region
+setup are serial/ synchronization costs that reduce useful parallel
+work. The retained Tareador graph labels the solver and copy separately.
 
-\reportfigure
-  {figures/jacobi-tdg.png}
-  {Jacobi task dependency graph.
-   Specify the exact decomposition and source version.}
-  {fig:jacobi-tdg}
+\paragraph{Tareador artifacts.}
+The modified Jacobi graph is retained as
+\url{tdg/dependency_graph_0_modified.pdf}; the vanilla graph, which
+also shows the separate matrix copy, is
+\url{tdg/dependency_graph_0_vanilla.pdf}. Their unusually large PDF
+page dimensions make them unsuitable for embedding at readable scale in
+this report.
 
-\reportfigure
-  {figures/jacobi-simulation.png}
-  {Simulated Jacobi execution.
-   Specify the processor count and simulation configuration.}
-  {fig:jacobi-simulation}
-
-\todo{Interpret the graph and simulated execution.
-Explain whether enough processors were used to expose the
-parallelism and where the critical path appears.}
+The modified graph exposes multiple potential tasks per solver call,
+but the saved graph is not a processor simulation and cannot establish
+whether a particular processor count was sufficient. The critical path
+must include the solver-to-copy-to-next-solver ordering; no simulation
+timeline or processor-count metadata was retained.
 
 \subsection{Gauss--Seidel}
 
-\todo{Identify dependencies caused by in-place updates.
-Explain their direction, their effect on execution order,
-and the resulting block-level wavefront.}
+For in-place Gauss--Seidel, a tile depends on the tile immediately to
+its left and the tile immediately above it: those tiles produce values
+read along the current tile's left and top boundaries. This imposes a
+north-west to south-east wavefront; tiles on the same anti-diagonal can
+run concurrently, while the first row and first column begin without one
+of these predecessors.
 
-\reportfigure
-  {figures/gauss-tdg.png}
-  {Gauss--Seidel task dependency graph.
-   Specify the exact decomposition and source version.}
-  {fig:gauss-tdg}
+\paragraph{Tareador artifacts.}
+The modified Gauss--Seidel graph is retained as
+\url{tdg/dependency_graph_1_modified.pdf}; the vanilla graph is
+\url{tdg/dependency_graph_1_vanilla.pdf}. The original PDFs have page
+dimensions too large for readable embedding in this report.
 
-\reportfigure
-  {figures/gauss-simulation.png}
-  {Simulated Gauss--Seidel execution.
-   Specify the processor count and simulation configuration.}
-  {fig:gauss-simulation}
-
-\todo{Compare the available parallelism with Jacobi.
-Repeat the graph and simulation pair for every additional
-decomposition explored.}
+The Gauss--Seidel wavefront has less immediate parallelism near the
+beginning and end of a sweep than Jacobi's independent cell updates.
+The retained vanilla Gauss--Seidel graph has no potential task children,
+whereas the modified graph exposes the block-level tasks. No simulation
+artifact is available to quantify the resulting parallelism.
 
 \FloatBarrier
 
@@ -343,14 +341,13 @@ decomposition explored.}
 
 \subsection{Initial data decomposition}
 
-
-
-Using istart and iend we get the first and final indexes of the rows we have to operate with. As we have to leave a halo, we take the maximum between 1 and istart in the case of istart being 0 (first block). In the case we are in the last block, we iterate until we arrive to the iend or sizex-2 (last row - 1). 
-
-Macros are the ones handling the even splitting in this case.
-
-We keep private tmp and diff so no other threads are writing in the same variables, while we keep the same public as the index we are addressing is different (the case of u, for example). 
-We use reduction for sum.
+The \texttt{lowerb}, \texttt{upperb}, and \texttt{numElem} macros divide
+the \texttt{sizex-2} interior rows among the threads, distributing any
+remainder over the first blocks and offsetting the row indices by one.
+Thus, the fixed boundary rows are excluded and each thread scans all
+interior columns. The arrays are shared, but each thread writes a
+disjoint set of \texttt{unew} cells. The scalar temporaries are private,
+and \texttt{sum} is combined with an OpenMP reduction.
 
 
 
@@ -364,11 +361,11 @@ We use reduction for sum.
                 int blocki=omp_get_thread_num();
                 int nblocksi=omp_get_num_threads();
         
-                int i_start = lowerb(blocki, nblocksi, sizex);
-                int i_end = upperb(blocki, nblocksi, sizex);
-                
-                
-                for (int i = max(1, i_start); i<= min(sizex-2, i_end); i++){
+                int interior_rows = sizex - 2;
+                int i_start = lowerb(blocki, nblocksi, interior_rows) + 1;
+                int i_end = upperb(blocki, nblocksi, interior_rows) + 1;
+
+                for (int i = i_start; i <= i_end; i++){
                         for (int j = 1; j<sizey-1; j++){
                                 tmp = 0.25 * ( u[ i*sizey          + (j-1) ] +  // left
                                     u[ i*sizey     + (j+1) ] +  // right
@@ -386,40 +383,59 @@ We use reduction for sum.
         }       
 \end{lstlisting}
 
-\todo{Summarize validation with 1 and 8 threads and refer
-to Table~\ref{tab:validation}.}
+No retained artifact records the requested 1- and 8-thread PPM or
+residual comparison; see Table~\ref{tab:validation}.
 
 \subsection{Overall analysis of the initial version}
 
-\todo{Record the tracing configuration. The assignment's
-provided tracing script uses 1, 4, 8, and 16 threads,
-with \texttt{-s 1022} and \texttt{-n 1000}. Verify the
-configuration actually used.}
+The Extrae trace artifacts cover 1, 4, 8, and 16 workers and report
+1000 solver invocations. The sweep independently records
+\texttt{-s 1022}, \texttt{-n 1000}, and residual threshold 0.00005;
+the exact trace command line is not present, so those input values
+cannot be independently confirmed for every trace.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
+    \midrule
+    1  & 2.46 & 1.00 & 100.0 \\
+    4  & 1.62 & 1.51 & 37.8 \\
+    8  & 1.47 & 1.67 & 20.9 \\
+    16 & 1.50 & 1.63 & 10.2 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Initial Jacobi Extrae elapsed times and scalability relative
+  to its own one-worker run.}
+  \label{tab:jacobi-initial}
+\end{table}
 
 \reportfigure
-  {figures/jacobi-initial-modelfactors.pdf}
-  {Model-factor tables for the initial Jacobi implementation.}
+  {aux/v1/heat-omp-jacobi-strong-extrae/modelfactor-tables.pdf}
+  {Extrae model-factor tables for the v1 Jacobi trace.}
   {fig:jacobi-initial-mf}
 
-\todo{Assess scalability. Identify the metric that should
-be addressed first, quote its measured values, and explain
-why it limits performance.}
+The initial Jacobi trace reaches only 1.63x speedup at 16 workers and
+its speedup peaks at 1.67x with 8 workers. The model reports a parallel
+fraction of 73.83\%, global efficiency falling from 82.28\% at 4 workers
+to 35.59\% at 16, and strategy efficiency near 98\% at 8 and 16 workers.
+This points first to limited parallel fraction rather than poor task
+balance: adding workers cannot accelerate the serial portion.
 
 \subsection{Detailed analysis of the initial version}
 
-\reportfigure
-  {figures/jacobi-initial-paraver.png}
-  {Initial Jacobi execution with 16 threads: synchronized
-   Paraver views of instantaneous parallelism and implicit tasks.}
-  {fig:jacobi-initial-paraver}
-
-\todo{Identify the code region responsible for the low
-parallel fraction. Relate the timeline to work performed
-between solver iterations and to the Tareador analysis.}
+The traces report 1000 implicit tasks per worker and no measured time in
+implicit-task synchronization, but the retained directory has no
+Paraver screenshots or synchronized timeline export. Thus the exact
+source region responsible for the serial fraction cannot be identified
+from the artifacts. The Tareador graph does show solver and copy phases
+as separate operations, so iteration-boundary work is a plausible
+candidate, not a confirmed attribution.
 
 \subsection{Optimization}
 
-\begin{lstlisting}[caption={Changes in the optimized Jacobi version.}]
+\begin{lstlisting}[caption={Parallel interior-copy routine retained in the v1 source.}]
 void copy_mat (double *u, double *v, unsigned sizex, unsigned sizey) {
 
     #pragma omp parallel
@@ -442,76 +458,89 @@ void copy_mat (double *u, double *v, unsigned sizex, unsigned sizey) {
 
 \end{lstlisting}
 
-\todo{Report correctness validation with 16 threads.}
+The v2 source contains a serial \texttt{copy\_mat} routine instead.
+The retained source files do not include the full build/run scripts,
+so this parallel-copy code should not be assumed to be the exact v2
+trace configuration.
+
+No 16-worker correctness log or PPM comparison is retained.
 
 \subsection{Overall analysis of the optimized version}
 
-\performancetable
-  {Optimized Jacobi performance. State the sequential baseline.}
-  {tab:jacobi-optimized}
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
+    \midrule
+    1  & 2.44 & 1.00 & 100.0 \\
+    4  & 0.68 & 3.58 & 89.5 \\
+    8  & 0.36 & 6.74 & 84.3 \\
+    16 & 0.20 & 12.38 & 77.4 \\
+    \bottomrule
+  \end{tabular}
+  \caption{v2 Jacobi Extrae elapsed times and model-reported
+  scalability relative to its own one-worker run.}
+  \label{tab:jacobi-optimized}
+\end{table}
 
 \reportfigure
-  {figures/jacobi-optimized-modelfactors.pdf}
+  {aux/v2/heat-omp-jacobi-strong-extrae/modelfactor-tables.pdf}
   {Model-factor tables for the optimized Jacobi implementation.}
   {fig:jacobi-optimized-mf}
 
-\reportfigure
-  {figures/jacobi-scalability.pdf}
-  {Jacobi strong scalability. Clearly identify the versions
-   and speedup baseline.}
-  {fig:jacobi-scalability}
-
-\todo{Did execution time decrease? Did scalability improve?
-Did the parallel fraction increase? Support each answer
-with measured values.}
+For the v2 Jacobi trace, the 16-worker elapsed time is 0.20 s versus
+1.50 s for v1, while the one-worker times are 2.44 s and 2.46 s.
+The v2 trace's parallel fraction is 98.62\%, up from 73.83\% in v1.
+Its trace speedup is 12.38x at 16 workers (versus 1.63x for v1).
+The higher parallel fraction is supported by the model-factor output;
+the retained files do not isolate which source-level change caused it.
 
 The improvement over the initial implementation at 16 threads is
 \[
   G_{\mathrm{Jacobi}}(16)
   =\frac{T_{\mathrm{J0},16}}{T_{\mathrm{J1},16}}
-  =\todo{Measured ratio}.
+  =\frac{1.50}{0.20}=7.50.
 \]
 
-\todo{If apparently superlinear speedups occur, discuss
-measurement precision and other explanations supported
-by the available evidence.}
+The v3 Jacobi trace reports 1.90, 0.49, 0.26, and 0.17 s for
+1, 4, 8, and 16 workers respectively (speedups 1.00, 3.89, 7.28,
+and 11.17). This is a separate implementation and is not the baseline
+for the J1 comparison. No Jacobi trace shows superlinear speedup.
 
 \subsection{Detailed analysis of the optimized version}
 
-\reportfigure
-  {figures/jacobi-optimized-paraver.png}
-  {Optimized Jacobi execution with 16 threads.}
-  {fig:jacobi-optimized-paraver}
-
-\todo{Compare equivalent time windows from the initial and
-optimized executions. Explain what improved and which
-bottlenecks remain.}
+No Paraver timeline images or equivalent time-window markers are
+retained, so a visual timeline comparison is not possible. The
+model-factor tables show that v2's parallel fraction is much higher
+than v1's, while global efficiency at 16 workers is still 81.65\%;
+the remaining loss is reflected in the model's 84.89\% computation-task
+scalability and 96.19\% strategy efficiency.
 
 \subsection{Further optimization, if implemented}
 
-\todo{Describe the optimization suggested by the input/output
-matrix-address hint. Explain how matrix ownership, boundary
-values, and final output correctness are preserved. If this
-version was not implemented, state that and remove the
-unused figure below.}
+The v3 source implements the pointer-alternation optimization: after a
+Jacobi step, it swaps \texttt{param.u} and \texttt{param.uhelp} rather
+than copying every interior element. The two buffers alternate roles;
+the solver writes only interior cells, leaving each buffer's boundary
+cells unchanged. The driver writes the buffer currently referenced by
+\texttt{param.u} after the final iteration. This behavior is visible in
+the source, but output-image correctness was not independently checked
+in the retained artifacts.
 
-\begin{lstlisting}[caption={Further Jacobi optimization, if implemented.}]
- case 0: // JACOBI
-                    residual = solve(param.u, param.uhelp, np, np);
-                    residual = solve(param.uhelp, param.u, np, np);
-                    // Copy uhelp into u
-                    //copy_mat(param.uhelp, param.u, np, np);
-                    break;
-
+\begin{lstlisting}[caption={Jacobi pointer alternation in the v3 driver.}]
+case 0: // JACOBI
+    residual = solve(param.u, param.uhelp, np, np);
+    double *aux = param.u;
+    param.u = param.uhelp;
+    param.uhelp = aux;
+    break;
 \end{lstlisting}
 
-\todo{Report correctness, execution time, and improvement
-relative to J1 under matching conditions.}
-
-\reportfigure
-  {figures/jacobi-further-paraver.png}
-  {Timeline for the further Jacobi optimization, if implemented.}
-  {fig:jacobi-further-paraver}
+The v3 trace reports 0.17 s with 16 workers, compared with 0.20 s
+for v2, a 1.18x elapsed-time improvement (15\% lower). The retained
+artifacts do not establish that the v2 and v3 runs used identical
+commands or confirm correctness against a sequential PPM.
 
 \FloatBarrier
 
@@ -521,93 +550,172 @@ relative to J1 under matching conditions.}
 
 \subsection{Blocking and dependency structure}
 
-\todo{Define the block layout, traversal order, and handling
-of incomplete boundary blocks. Explain why synchronization
-between blocks is needed and how it enables wavefront
-parallelism.}
+The Gauss--Seidel solver partitions the matrix into
+\texttt{nblocksi} row blocks and \texttt{nblocksj} column blocks and
+visits tiles in increasing row-block, then column-block, order.
+The \texttt{lowerb}/\texttt{upperb} macros balance non-divisible
+dimensions; each tile clips its iteration to the interior range
+\texttt{1..sizex-2} by \texttt{1..sizey-2}. Since updates are in place,
+each tile must wait for its left and upper neighbours. The resulting
+anti-diagonal wavefront permits concurrent tiles without violating the
+Gauss--Seidel read-after-write order.
 
 \subsection{Task decomposition with explicit dependencies}
 
-\todo{Describe task creation, task granularity, dependency
-locators, data-sharing attributes, residual accumulation,
-and completion before the next solver iteration.}
+The explicit-task version creates one task per tile inside a
+\texttt{single}/\texttt{taskgroup}. Each task owns a tile, keeps
+\texttt{tmp} and \texttt{diff} private, and participates in the
+taskgroup reduction for the residual. The two \texttt{depend(in:)}
+locators represent the left and upper predecessor tiles; the
+\texttt{depend(out:)} locator identifies the tile's bottom-right cell
+for successor matching. The taskgroup completes all tile work and
+combines the residual before the next solver iteration begins.
 
-\begin{lstlisting}[caption={Gauss--Seidel with explicit tasks.}]
-/* Paste the relevant implementation using:
-   #pragma omp task depend(...)
+\begin{lstlisting}[caption={Explicit Gauss--Seidel tile tasks (v1).}]
+int nblocksi = omp_get_max_threads();
+int nblocksj = nblocksi;
 
-   Include enough surrounding code to explain task creation,
-   block indexing, dependencies, and synchronization.
-*/
+#pragma omp parallel
+{
+  #pragma omp single
+  {
+    #pragma omp taskgroup task_reduction(+:sum)
+    {
+      for (int blocki = 0; blocki < nblocksi; ++blocki) {
+        int i_start = lowerb(blocki, nblocksi, sizex);
+        int i_end = upperb(blocki, nblocksi, sizex);
+        for (int blockj = 0; blockj < nblocksj; ++blockj) {
+          int j_start = lowerb(blockj, nblocksj, sizey);
+          int j_end = upperb(blockj, nblocksj, sizey);
+          #pragma omp task in_reduction(+:sum) private(tmp,diff) \
+            depend(in: u[i_end*sizey+j_start-1], \
+                       u[(i_start-1)*sizey+j_end]) \
+            depend(out: u[i_end*sizey+j_end])
+          {
+            for (int i = max(1,i_start); i <= min(sizex-2,i_end); ++i)
+              for (int j = max(1,j_start); j <= min(sizey-2,j_end); ++j) {
+                tmp = 0.25 * (u[i*sizey+j-1] + u[i*sizey+j+1]
+                              + u[(i-1)*sizey+j] + u[(i+1)*sizey+j]);
+                diff = tmp - u[i*sizey+j];
+                sum += diff * diff;
+                u[i*sizey+j] = tmp;
+              }
+          }
+        }
+      }
+    }
+  }
+}
 \end{lstlisting}
 
-\todo{Explain why the declared dependencies match the
-algorithm's dependencies. Report correctness validation.}
+The left locator matches the preceding tile's last-column output, and
+the upper locator matches the preceding row tile's last-row output.
+The output locator permits the next tile to depend on this tile.
+However, source-code inspection is not a substitute for testing the
+OpenMP dependency implementation; no sequential comparison or PPM
+validation log is retained.
 
-\performancetable
-  {Gauss--Seidel performance with explicit tasks.}
-  {tab:gauss-tasks}
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
+    \midrule
+    1  & 7.59 & 1.00 & 100.0 \\
+    4  & 4.24 & 1.79 & 44.8 \\
+    8  & 2.85 & 2.66 & 33.2 \\
+    16 & 2.01 & 3.78 & 23.6 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Explicit-task Gauss--Seidel Extrae elapsed times and
+  scalability relative to its own one-worker run.}
+  \label{tab:gauss-tasks}
+\end{table}
 
 \reportfigure
-  {figures/gauss-tasks-scalability.pdf}
-  {Strong scalability of Gauss--Seidel with explicit tasks.}
-  {fig:gauss-tasks-scalability}
-
-\reportfigure
-  {figures/gauss-tasks-modelfactors.pdf}
-  {Model-factor tables for Gauss--Seidel with explicit tasks.}
+  {aux/v1/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
+  {Extrae model-factor tables for explicit-task Gauss--Seidel.}
   {fig:gauss-tasks-mf}
 
-\reportfigure
-  {figures/gauss-tasks-paraver.png}
-  {Paraver timeline for Gauss--Seidel with explicit tasks.}
-  {fig:gauss-tasks-paraver}
-
-\todo{Explain scaling using measured model factors and
-timeline evidence. Discuss task overhead, dependency waits,
-and load balance where supported by the observations.
-Summarize memory results from Section~\ref{sec:memory}.}
+Explicit-task time falls from 7.59 s to 2.01 s, a 3.78x speedup at
+16 workers. Load balance remains about 95\% for task count and task
+execution time, but the model reports synchronization overhead per
+task of 94.62\% at 4 workers and 153.88\% at 16; scheduling overhead
+is only 1.68\% at 16. The workload creates 256,000 tasks at 16 workers
+and 1000 taskgroups, so dependency/synchronization cost grows as each
+tile's useful work shrinks. No Paraver timeline or memory-counter
+results are retained to refine this interpretation.
 
 \subsection{Data decomposition with do-across}
 
-\todo{Describe the row ownership, column blocking, and use
-of implicit tasks. Explain the ordered iteration space and
-the source/sink dependencies.}
+The do-across version distributes row-block iterations among the
+implicit tasks and iterates over column blocks inside each row block.
+The ordered source/sink clauses express the same left and upper
+predecessor relations as the task version. Its reduction combines the
+per-cell residual contributions.
 
-\begin{lstlisting}[caption={Gauss--Seidel with do-across.}]
-/* Paste the relevant implementation using:
-   ordered + depend(sink, ...)
-   ordered + depend(source)
+\begin{lstlisting}[caption={Gauss--Seidel do-across dependency loop (v2).}]
+int nblocksi = omp_get_max_threads();
+int nblocksj = nblocksi;
 
-   Include loop structure, scheduling, and block calculations.
-*/
+#pragma omp parallel for ordered(2) private(tmp,diff) reduction(+:sum)
+for (int blocki = 0; blocki < nblocksi; ++blocki) {
+  int i_start = lowerb(blocki, nblocksi, sizex);
+  int i_end = upperb(blocki, nblocksi, sizex);
+  for (int blockj = 0; blockj < nblocksj; ++blockj) {
+    int j_start = lowerb(blockj, nblocksj, sizey);
+    int j_end = upperb(blockj, nblocksj, sizey);
+    #pragma omp ordered depend(sink: blocki, blockj-1) \
+                         depend(sink: blocki-1, blockj)
+    for (int i = max(1,i_start); i <= min(sizex-2,i_end); ++i)
+      for (int j = max(1,j_start); j <= min(sizey-2,j_end); ++j) {
+        tmp = 0.25 * (u[i*sizey+j-1] + u[i*sizey+j+1]
+                      + u[(i-1)*sizey+j] + u[(i+1)*sizey+j]);
+        diff = tmp - u[i*sizey+j];
+        sum += diff * diff;
+        u[i*sizey+j] = tmp;
+      }
+    #pragma omp ordered depend(source)
+  }
+}
 \end{lstlisting}
 
-\todo{Explain how the implementation preserves dependencies
-and the intended geometric row decomposition. Report
-correctness validation.}
+Each tile waits for its left and upper tile before updating in place,
+then publishes completion as a source for its right and lower
+successors. The v2 source uses an ordered loop nest over block indices;
+the exact compiler/OpenMP version and a correctness run are not recorded,
+so successful compilation and numerical equivalence cannot be confirmed
+from the retained artifacts.
 
-\performancetable
-  {Gauss--Seidel performance with the initial do-across version.}
-  {tab:gauss-doacross}
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
+    \midrule
+    1  & 7.58 & 1.00 & 100.0 \\
+    4  & 3.29 & 2.30 & 57.5 \\
+    8  & 1.74 & 4.36 & 54.5 \\
+    16 & 0.90 & 8.43 & 52.7 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Initial do-across Gauss--Seidel Extrae elapsed times and
+  scalability relative to its own one-worker run.}
+  \label{tab:gauss-doacross}
+\end{table}
 
 \reportfigure
-  {figures/gauss-doacross-scalability.pdf}
-  {Strong scalability of the initial do-across implementation.}
-  {fig:gauss-doacross-scalability}
-
-\reportfigure
-  {figures/gauss-doacross-modelfactors.pdf}
-  {Model-factor tables for the initial do-across implementation.}
+  {aux/v2/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
+  {Extrae model-factor tables for the initial do-across implementation.}
   {fig:gauss-doacross-mf}
 
-\reportfigure
-  {figures/gauss-doacross-paraver.png}
-  {Paraver timeline for the initial do-across implementation.}
-  {fig:gauss-doacross-paraver}
-
-\todo{Explain the important performance metrics and compare
-this version with explicit tasks under matching conditions.}
+At 16 workers, the do-across time is 0.90 s versus 2.01 s for explicit
+tasks, while the 1-worker times (7.58 and 7.59 s) are nearly equal.
+The do-across trace has 99.65\% parallel fraction and 99.37\% strategy
+efficiency at 16 workers, but only 54.46\% computation-task scalability.
+The recorded elapsed times show substantially better scaling than the
+explicit-task version; no trace timeline is available to isolate where
+the remaining loss occurs.
 
 \FloatBarrier
 
@@ -623,23 +731,28 @@ The assignment specifies
   = n_{\mathrm{blocks},i}\times \texttt{userparam}.
 \]
 
-\todo{Explain how the \texttt{-u} argument controls this
-relationship and how the code handles block sizes and edges.}
+In the v3 driver, \texttt{-u} sets the global \texttt{userparam}, which
+the solver multiplies by the row-block count to obtain the number of
+column blocks. The lower/upper-bound macros distribute remainder
+elements across early blocks, while the tile loops clip their work to
+interior cells.
 
-\begin{lstlisting}[caption={Configurable Gauss--Seidel blocking.}]
-/* Paste the changes that use userparam to set the number
-   of blocks in the j dimension. */
+\begin{lstlisting}[caption={Column-block count in the v3 solver.}]
+int nblocksi = omp_get_max_threads();
+int nblocksj = nblocksi * userparam;
 \end{lstlisting}
 
-\todo{Explain how increasing the number of column blocks
-changes the available parallelism, computation per block,
-and frequency of synchronization.}
+Increasing \texttt{userparam} creates more tiles and exposes more
+independent wavefront work, but reduces computation per tile and
+increases dependency/scheduling frequency. Too many small tiles increase
+overhead, as the 32- and 64-factor measurements demonstrate.
 
 \subsection{Parameter exploration with 16 threads}
 
-\todo{Describe the values explored using
-\texttt{submit-userparam-omp.sh}, with 16 threads.
-Record the input and timing method.}
+The retained sweep used 16 workers, resolution 1022, 1000 maximum
+iterations, and residual threshold 0.00005. It reports ordinary
+application elapsed time; the exact submission script and repetition
+count are not present.
 
 \begin{table}[htbp]
   \centering
@@ -650,60 +763,72 @@ Record the input and timing method.}
     Column blocks &
     Time (s) \\
     \midrule
-    \missing & \missing & \missing & \missing \\
-    \missing & \missing & \missing & \missing \\
-    \missing & \missing & \missing & \missing \\
-    \missing & \missing & \missing & \missing \\
+    1  & 16 & 16   & 0.922 \\
+    2  & 16 & 32   & 0.634 \\
+    4  & 16 & 64   & 0.480 \\
+    8  & 16 & 128  & 0.421 \\
+    16 & 16 & 256  & 0.464 \\
+    32 & 16 & 512  & 0.665 \\
+    64 & 16 & 1024 & 1.080 \\
     \bottomrule
   \end{tabular}
   \caption{Block-count exploration with 16 threads.
-  Add rows for all tested parameter values.}
+  All tested values from the retained sweep.}
   \label{tab:block-tuning}
 \end{table}
 
-\reportfigure
-  {figures/gauss-userparam.pdf}
-  {Effect of the block-count parameter on Gauss--Seidel
-   performance with 16 threads.}
-  {fig:gauss-userparam}
-
 Selected parameter:
 \[
-  \texttt{userparam}=\todo{Selected value}.
+  \texttt{userparam}=8.
 \]
 
-\todo{Justify the selected value using the measurements.
-Discuss the balance between concurrency and synchronization.
-Report correctness for the tested configurations.}
+Among the tested values, 8 is fastest at 0.421 s. Increasing it to 16,
+32, and 64 worsens runtime to 0.464, 0.665, and 1.080 s, consistent
+with synchronization and task overhead outweighing additional
+parallelism. The sweep records the same 1000-iteration residual
+(0.023071) for every value, but contains no PPM comparison or independent
+correctness check.
 
 \subsection{Overall analysis after tuning}
 
-\todo{Confirm that the selected parameter was set consistently
-in the strong-scaling and Extrae scripts. State how block
-counts change as the number of threads changes.}
+The retained v3 driver defaults \texttt{userparam} to 1; the trace files
+do not preserve their command line, so it is not possible to confirm
+that the selected value 8 was used for the strong-scaling traces.
+With a fixed parameter of 8, column-block count would scale as eight
+times the worker count (8, 32, 64, and 128 for 1, 4, 8, and 16 workers).
 
-\performancetable
-  {Performance of the tuned Gauss--Seidel implementation.}
-  {tab:gauss-tuned}
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
+    \midrule
+    1  & 7.30 & 1.00 & 100.0 \\
+    4  & 1.65 & 4.44 & 111.0 \\
+    8  & 0.71 & 10.23 & 127.9 \\
+    16 & 0.40 & 18.24 & 114.0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{v3 do-across Gauss--Seidel Extrae elapsed times and reported
+  scalability relative to its own one-worker run. The trace's
+  \texttt{-u} value is unknown.}
+  \label{tab:gauss-tuned}
+\end{table}
 
 \reportfigure
-  {figures/gauss-tuned-scalability.pdf}
-  {Strong scalability after block-count tuning.}
-  {fig:gauss-tuned-scalability}
-
-\reportfigure
-  {figures/gauss-tuned-modelfactors.pdf}
-  {Model-factor tables after block-count tuning.}
+  {aux/v3/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
+  {Extrae model-factor tables for the v3 do-across implementation.}
   {fig:gauss-tuned-mf}
 
-\reportfigure
-  {figures/gauss-tuned-paraver.png}
-  {Tuned Gauss--Seidel execution with 16 threads.}
-  {fig:gauss-tuned-paraver}
-
-\todo{Is speedup approximately linear? Explain the result
-using specific model-factor values and timeline observations.
-Quantify the improvement over the initial do-across version.}
+The v3 trace reports 18.24x speedup at 16 workers, above linear; its
+model reports 121.72\% global efficiency and 123.57\% computation-task
+scalability, driven in part by 157.12\% IPC scalability. Instruction
+scalability is 84.22\% and frequency scalability 93.39\%, so this
+superlinear result should be treated as measurement/model behavior,
+not as evidence of more than ideal parallel work. Compared with v2's
+0.90 s at 16 workers, v3's 0.40 s is 2.25x faster, but the v3 trace's
+\texttt{-u} value is not recorded and comparability is therefore
+conditional.
 
 \FloatBarrier
 
@@ -714,10 +839,11 @@ Quantify the improvement over the initial do-across version.}
 
 \subsection{Measurement configuration}
 
-\todo{Describe the measurements from
-\texttt{submit-strong-memory.sh}. Identify the versions,
-thread counts, block parameters, input, and execution node.
-Compare explicit tasks with at least one data decomposition.}
+Raw Extrae trace files are retained for the explicit-task and
+do-across versions on \texttt{cpds1101}, but the memory-measurement
+script, counter configuration, and derived L2-miss output are absent.
+The traces alone do not establish which cache event was measured or
+whether the parameter and iteration counts match the timing runs.
 
 \subsection{L2 cache misses}
 
@@ -729,37 +855,26 @@ Compare explicit tasks with at least one data decomposition.}
     Version & Threads & Total L2 misses &
     Misses/thread & Time (s) \\
     \midrule
-    GT & 1  & \missing & \missing & \missing \\
-    GT & 4  & \missing & \missing & \missing \\
-    GT & 8  & \missing & \missing & \missing \\
-    GT & 16 & \missing & \missing & \missing \\
-    \midrule
-    GD-opt & 1  & \missing & \missing & \missing \\
-    GD-opt & 4  & \missing & \missing & \missing \\
-    GD-opt & 8  & \missing & \missing & \missing \\
-    GD-opt & 16 & \missing & \missing & \missing \\
+    \multicolumn{5}{c}{No L2-miss counts or matching memory timings retained} \\
     \bottomrule
   \end{tabular}
-  \caption{Memory measurements for explicit tasks and data
-  decomposition. Identify the timing source and adjust rows
-  to match the experiments performed.}
+  \caption{No cache-counter or matching timing values were retained
+  for explicit tasks or data decomposition.}
   \label{tab:memory}
 \end{table}
 
-\todo{Use the overall and average-per-thread counts reported
-by the measurement output. Identify any differences in
-completed iterations or total work that affect comparability.}
+The retained artifacts do not report total or per-thread L2 misses, nor
+do they contain the matching memory-run completion counts. The parameter
+sweep reaches 1000 iterations with residual 0.023071, but it is not an
+L2-counter measurement and cannot stand in for one.
 
 \subsection{Interpretation}
 
-\todo{Are the differences in L2 misses substantial?
-Discuss data ownership, task scheduling, reuse, and locality
-using the implementation and measurements as evidence.}
-
-\todo{Do the differences in cache misses correspond to
-execution-time differences? Explain the relationship while
-also considering synchronization, task overhead, and
-available parallelism.}
+No quantitative cache-locality conclusion is supported without the
+missing L2 counter values. By construction, row ownership gives the
+data-decomposition versions contiguous row segments, while explicit
+task scheduling adds task/dependency overhead; these are hypotheses
+about locality and overhead, not measured cache results here.
 
 \FloatBarrier
 
@@ -767,41 +882,28 @@ available parallelism.}
 \section{Conclusions}
 % ============================================================
 
-\todo{Summarize the main findings with measured values:
-the best Jacobi version, the effect of its optimizations,
-the comparison between the Gauss--Seidel decompositions,
-the selected block parameter, and the memory-analysis result.}
+Among the retained Jacobi traces, the v3 pointer-alternation version
+has the lowest 16-worker elapsed time (0.17 s), compared with 0.20 s
+for v2 and 1.50 s for v1. The model's reported parallel fraction rises
+from 73.83\% in v1 to 98.62\% in v2. For Gauss--Seidel, the explicit
+task version reaches 3.78x speedup at 16 workers, while the initial
+do-across trace reaches 8.43x; the v3 trace reports 18.24x, subject to
+the unknown \texttt{-u} value and the superlinear-efficiency caveat.
+The best parameter in the retained 16-worker sweep is
+\texttt{userparam}=8 at 0.421 s. No cache-counter evidence is available.
 
-\todo{State the remaining performance limitations and the
-extent to which the results depend on problem size,
-thread count, and measurement precision.}
-
-% ============================================================
-% OPTIONAL APPENDICES
-% Delete these sections if they are not part of your report.
-% ============================================================
-\appendix
-
-\section{Additional preparation exercises}
-
-\todo{If included, explain block, cyclic, and block-cyclic
-data decompositions, the owner-computes rule, and balanced
-row assignment when the number of rows is not divisible
-by the number of threads.}
-
-\section{Custom synchronization exercise}
-
-\todo{If the annex exercise is included, describe the
-synchronization state and how it is reset or advanced across
-iterations. Justify visibility and ordering requirements.}
-
-\todo{Discuss whether adjacent synchronization variables
-can cause false sharing and explain a possible mitigation.}
+The reported scaling depends on the traced problem size and thread
+count, and the available records do not specify processor topology,
+compiler flags, repetitions, or the exact command line for every trace.
+The sweep failed to reach its requested residual threshold within 1000
+iterations. Correctness comparisons, Paraver timelines, and memory
+counters should be added before treating these performance observations
+as a complete evaluation.
 
 % Submission reminder:
 % Submit the report PDF and a separate ZIP containing only
 % the parallel C source files, with meaningful version names.
 % Include every group member's name on the title page.
-% Remove all TODOs and unused optional sections before submission.
+% Replace the unrecorded group metadata before submission.
 
 \end{document}

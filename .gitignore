@@ -1,0 +1,12 @@
+# LaTeX build output for the assignment report
+/a2.aux
+/a2.fdb_latexmk
+/a2.fls
+/a2.log
+/a2.out
+/a2.pdf
+/a2.synctex.gz
+/a2.toc
+
+# Raw Paraver trace files can be very large; retain summaries and configs.
+*.prv

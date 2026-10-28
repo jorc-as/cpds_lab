@@ -1,0 +1,77 @@
+1
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.922 
+Flops and Flops per second: (11.489 GFlop => 12459.37 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+2
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.634 
+Flops and Flops per second: (11.489 GFlop => 18112.96 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+4
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.480 
+Flops and Flops per second: (11.489 GFlop => 23941.33 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+8
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.421 
+Flops and Flops per second: (11.489 GFlop => 27290.94 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+16
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.464 
+Flops and Flops per second: (11.489 GFlop => 24758.65 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+32
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 0.665 
+Flops and Flops per second: (11.489 GFlop => 17275.85 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
+64
+Iterations        : 1000
+Resolution        : 1022
+Residual          : 0.000050
+Solver            : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 1.080 
+Flops and Flops per second: (11.489 GFlop => 10641.22 MFlop/s)
+Convergence to residual=0.023071: 1000 iterations
