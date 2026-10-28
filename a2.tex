@@ -13,7 +13,6 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{booktabs}
-\usepackage{tabularx}
 \usepackage{listings}
 \usepackage{enumitem}
 \usepackage{placeins}
@@ -51,33 +50,6 @@
 }
 \lstset{style=CStyle}
 
-% Inserts an uploaded figure, or a placeholder if it is missing.
-% Usage:
-% \reportfigure{figures/example.png}{Caption}{fig:label}
-\newcommand{\reportfigure}[3]{%
-  \begin{figure}[htbp]
-    \centering
-    \IfFileExists{#1}{%
-      \includegraphics[
-        width=\linewidth,
-        height=0.5\textheight,
-        keepaspectratio
-      ]{#1}%
-    }{%
-      \fbox{%
-        \parbox[c][3.5cm][c]{0.90\linewidth}{%
-          \centering
-          \textbf{Figure placeholder}\\[0.5em]
-          Upload the corresponding figure as\\[0.5em]
-          \texttt{\detokenize{#1}}
-        }%
-      }%
-    }
-    \caption{#2}
-    \label{#3}
-  \end{figure}
-}
-
 % ============================================================
 % DOCUMENT INFORMATION
 % ============================================================
@@ -87,123 +59,36 @@
   \large Solving the Heat Equation
 }
 \author{
-  Group member names not provided
+  Group members: names not provided
 }
-\date{Fall 2026}
+\date{}
 
 \begin{document}
 
 \maketitle
 
-\begin{center}
-  \textbf{Group:} Not recorded\\
-  \textbf{Submission date:} Not recorded
-\end{center}
-
 \tableofcontents
 \newpage
 
 % ============================================================
-\section{Objectives and experimental setup}
-% ============================================================
+The trace files identify execution nodes \texttt{cpds1101},
+\texttt{boada-18}, and \texttt{boada-19}; compiler flags, affinity, and
+several exact run commands are not present in the artifacts.
 
-This report studies the parallelization of the Jacobi and
-Gauss--Seidel heat diffusion solvers using OpenMP. We evaluate
-correctness, strong scaling, synchronization overhead, and
-memory locality for the implemented versions.
-
-\subsection{Execution environment}
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabularx}{\linewidth}{lX}
-    \toprule
-    Item & Configuration \\
-    \midrule
-    Machine / execution node & \texttt{cpds1101} (recorded in Extrae table captions); processor model not recorded \\
-    Available cores & 1, 4, 8, and 16 workers were measured; physical-core and SMT layout not recorded \\
-    Compiler & Not recorded in the retained auxiliary files \\
-    Compilation flags & Not recorded in the retained auxiliary files \\
-    Thread placement & Not recorded in the retained auxiliary files \\
-    Input configuration & Two heat sources; input filename and any changes not recorded \\
-    Problem size & \texttt{-s 1022} in the user-parameter sweep \\
-    Maximum iterations & \texttt{-n 1000} in the user-parameter sweep and 1000 solver invocations in traces \\
-    Residual threshold & \texttt{-r 0.00005} in the user-parameter sweep \\
-    Timing method & Extrae whole-program elapsed times for trace runs; ordinary elapsed-time output for the parameter sweep; repetitions not recorded \\
-    \bottomrule
-  \end{tabularx}
-  \caption{Experimental facts recoverable from the retained auxiliary
-  files; unavailable configuration details are identified in the table.}
-  \label{tab:environment}
-\end{table}
-
-\subsection{Performance metrics}
-
-Let $T_{\mathrm{seq}}$ be the execution time of the original
-sequential implementation of the same solver, and let $T_p$
-be the time of the parallel version using $p$ threads.
-We define
-\[
-  S(p)=\frac{T_{\mathrm{seq}}}{T_p},
-  \qquad
-  E(p)=\frac{S(p)}{p}\times 100\%.
-\]
-
-If a plot instead uses the one-thread parallel execution as its
-baseline, we label it explicitly:
+Extrae speedup and efficiency below use each implementation's
+one-worker result as the baseline:
 \[
   S_1(p)=\frac{T_1}{T_p}.
+  \quad
+  E_1(p)=\frac{S_1(p)}{p}\times 100\%.
 \]
-
-For comparisons between two implementations at the same thread
-count, we use
-\[
-  G(p)=\frac{T_{\mathrm{before},p}}
-             {T_{\mathrm{after},p}}.
-\]
-
-The retained Extrae model-factor outputs report whole-program elapsed
-times for 1, 4, 8, and 16 workers. Their speedup and efficiency use the
-one-worker run of the same version as the baseline, not a separately
-measured sequential executable. The parameter sweep reports ordinary
-runtime for 16 workers. The two timing sources are kept distinct below.
-The sweep reached its 1000-iteration limit with residual 0.023071,
-above the requested threshold 0.00005; it therefore did not converge
-to that threshold.
-
-\subsection{Implementation identifiers}
-
-The identifiers below follow the versioned source and trace directories
-in \texttt{aux/}. The source files combine Jacobi with one of the
-Gauss--Seidel implementations.
-
-\begin{table}[htbp]
-  \centering
-  \small
-  \begin{tabularx}{\linewidth}{lXX}
-    \toprule
-    ID & Description & Source files \\
-    \midrule
-    J0 & Initial parallel Jacobi & v1 source \\
-    J1 & Optimized parallel Jacobi & v2 source \\
-    J2 & Jacobi with alternating input/output pointers & v3 source \\
-    GT & Gauss--Seidel with explicit tasks & v1 source \\
-    GD & Gauss--Seidel with do-across & v2 source \\
-    GD-opt & Do-across with configurable column blocks & v3 source \\
-    \bottomrule
-  \end{tabularx}
-  \caption{Jacobi and Gauss--Seidel variants identified by the auxiliary
-  source-version directories.}
-  \label{tab:versions}
-\end{table}
-
-Source basenames, in v1/v2/v3 order:\\
-\url{solver-jacobi-parallel-gauss-explicit.c}\\
-\url{solver-jacobi-optimized-gauss-do-across.c}\\
-\url{solver-omp.c}
+For comparisons at the same worker count, the ratio is
+$G(p)=T_{\mathrm{before},p}/T_{\mathrm{after},p}$. The Extrae files
+report 1, 4, 8, and 16 workers; the user-parameter sweep uses ordinary
+application timing at 16 workers.
 
 % ============================================================
-\section{Sequential reference and correctness}
+\section{Sequential behavior and correctness}
 % ============================================================
 
 \subsection{Sequential Jacobi and Gauss--Seidel}
@@ -217,54 +102,10 @@ The driver stops when the residual is below the requested threshold or
 when the maximum iteration count is reached (\texttt{-n 0} disables the
 iteration limit in the supplied driver).
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{lrrr}
-    \toprule
-    Solver & Time (s) & Iterations & Final residual \\
-    \midrule
-    Jacobi & Not recorded & Not recorded & Not recorded \\
-    Gauss--Seidel & Not recorded & Not recorded & Not recorded \\
-    \bottomrule
-  \end{tabular}
-  \caption{Sequential reference results for the stated configuration.}
-  \label{tab:sequential}
-\end{table}
-
-No sequential-reference timings, iteration/residual logs, or PPM files
-are present in the retained auxiliary files, so the sequential results
-and output-image comparison cannot be reconstructed here.
-
-\subsection{Validation procedure}
-
-Each parallel implementation is compared with the original
-sequential implementation of the \emph{same solver}, using
-matching input and stopping conditions.
-
-The trace and sweep artifacts do not contain paired sequential/parallel
-PPM outputs or a correctness log. Consequently, the numerical equivalence
-of each parallel version remains unverified by the retained evidence;
-the model-factor traces demonstrate execution, not correctness.
-
-\begin{table}[htbp]
-  \centering
-  \small
-  \begin{tabularx}{\linewidth}{llrrX}
-    \toprule
-    Version & Threads & Iterations & Residual & PPM comparison \\
-    \midrule
-    J0 & 1, 8 & Not recorded & Not recorded & No PPM or comparison log retained \\
-    J1 & 16 & Not recorded & Not recorded & No PPM or comparison log retained \\
-    J2 & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
-    GT & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
-    GD & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
-    GD-opt & 1, 4, 8, 16 & 1000 invocations in trace & Not recorded & No PPM or comparison log retained \\
-    \bottomrule
-  \end{tabularx}
-  \caption{Configurations listed for validation in the draft. No
-  pass/fail or PPM-comparison results were retained.}
-  \label{tab:validation}
-\end{table}
+The assignment validates each parallel solver against the sequential
+output from the same solver, comparing the PPM and iteration count.
+Those baseline images and validation logs are not in the supplied
+artifacts, so correctness results cannot be reported here.
 
 \FloatBarrier
 
@@ -349,11 +190,6 @@ interior columns. The arrays are shared, but each thread writes a
 disjoint set of \texttt{unew} cells. The scalar temporaries are private,
 and \texttt{sum} is combined with an OpenMP reduction.
 
-
-
-% The assignment requires explicit work assignment using
-% OpenMP intrinsic functions for this Jacobi decomposition.
-% Do not replace that requirement with omp for or explicit tasks.
 \begin{lstlisting}[caption={Initial parallel Jacobi implementation.}]
  #pragma omp parallel private(tmp, diff) reduction(+:sum) 
         {
@@ -383,8 +219,8 @@ and \texttt{sum} is combined with an OpenMP reduction.
         }       
 \end{lstlisting}
 
-No retained artifact records the requested 1- and 8-thread PPM or
-residual comparison; see Table~\ref{tab:validation}.
+The requested 1- and 8-worker PPM and iteration comparisons are not
+present in the artifacts.
 
 \subsection{Overall analysis of the initial version}
 
@@ -394,27 +230,11 @@ The Extrae trace artifacts cover 1, 4, 8, and 16 workers and report
 the exact trace command line is not present, so those input values
 cannot be independently confirmed for every trace.
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
-    \midrule
-    1  & 2.46 & 1.00 & 100.0 \\
-    4  & 1.62 & 1.51 & 37.8 \\
-    8  & 1.47 & 1.67 & 20.9 \\
-    16 & 1.50 & 1.63 & 10.2 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Initial Jacobi Extrae elapsed times and scalability relative
-  to its own one-worker run.}
-  \label{tab:jacobi-initial}
-\end{table}
-
-\reportfigure
-  {aux/v1/heat-omp-jacobi-strong-extrae/modelfactor-tables.pdf}
-  {Extrae model-factor tables for the v1 Jacobi trace.}
-  {fig:jacobi-initial-mf}
+\lstinputlisting[
+  basicstyle=\ttfamily\tiny,
+  caption={Extrae model-factor output for the v1 Jacobi trace.},
+  label={lst:jacobi-initial-mf}
+]{aux/v1/heat-omp-jacobi-strong-extrae/modelfactors.out}
 
 The initial Jacobi trace reaches only 1.63x speedup at 16 workers and
 its speedup peaks at 1.67x with 8 workers. The model reports a parallel
@@ -467,27 +287,11 @@ No 16-worker correctness log or PPM comparison is retained.
 
 \subsection{Overall analysis of the optimized version}
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
-    \midrule
-    1  & 2.44 & 1.00 & 100.0 \\
-    4  & 0.68 & 3.58 & 89.5 \\
-    8  & 0.36 & 6.74 & 84.3 \\
-    16 & 0.20 & 12.38 & 77.4 \\
-    \bottomrule
-  \end{tabular}
-  \caption{v2 Jacobi Extrae elapsed times and model-reported
-  scalability relative to its own one-worker run.}
-  \label{tab:jacobi-optimized}
-\end{table}
-
-\reportfigure
-  {aux/v2/heat-omp-jacobi-strong-extrae/modelfactor-tables.pdf}
-  {Model-factor tables for the optimized Jacobi implementation.}
-  {fig:jacobi-optimized-mf}
+\lstinputlisting[
+  basicstyle=\ttfamily\tiny,
+  caption={Extrae model-factor output for the v2 Jacobi trace.},
+  label={lst:jacobi-optimized-mf}
+]{aux/v2/heat-omp-jacobi-strong-extrae/modelfactors.out}
 
 For the v2 Jacobi trace, the 16-worker elapsed time is 0.20 s versus
 1.50 s for v1, while the one-worker times are 2.44 s and 2.46 s.
@@ -499,14 +303,22 @@ the retained files do not isolate which source-level change caused it.
 The improvement over the initial implementation at 16 threads is
 \[
   G_{\mathrm{Jacobi}}(16)
-  =\frac{T_{\mathrm{J0},16}}{T_{\mathrm{J1},16}}
+  =\frac{T_{\mathrm{v1},16}}{T_{\mathrm{v2},16}}
   =\frac{1.50}{0.20}=7.50.
 \]
 
 The v3 Jacobi trace reports 1.90, 0.49, 0.26, and 0.17 s for
 1, 4, 8, and 16 workers respectively (speedups 1.00, 3.89, 7.28,
 and 11.17). This is a separate implementation and is not the baseline
-for the J1 comparison. No Jacobi trace shows superlinear speedup.
+for the v1-to-v2 comparison. No Jacobi trace shows superlinear speedup.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\linewidth]{aux/jacobi-extrae-speedup.pdf}
+  \caption{Jacobi speedup calculated from Extrae elapsed times, relative
+  to each version's own one-worker run.}
+  \label{fig:jacobi-speedup}
+\end{figure}
 
 \subsection{Detailed analysis of the optimized version}
 
@@ -615,27 +427,11 @@ However, source-code inspection is not a substitute for testing the
 OpenMP dependency implementation; no sequential comparison or PPM
 validation log is retained.
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
-    \midrule
-    1  & 7.59 & 1.00 & 100.0 \\
-    4  & 4.24 & 1.79 & 44.8 \\
-    8  & 2.85 & 2.66 & 33.2 \\
-    16 & 2.01 & 3.78 & 23.6 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Explicit-task Gauss--Seidel Extrae elapsed times and
-  scalability relative to its own one-worker run.}
-  \label{tab:gauss-tasks}
-\end{table}
-
-\reportfigure
-  {aux/v1/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
-  {Extrae model-factor tables for explicit-task Gauss--Seidel.}
-  {fig:gauss-tasks-mf}
+\lstinputlisting[
+  basicstyle=\ttfamily\tiny,
+  caption={Extrae model-factor output for explicit-task Gauss--Seidel.},
+  label={lst:gauss-tasks-mf}
+]{aux/v1/heat-omp-gausseidel-strong-extrae/modelfactors.out}
 
 Explicit-task time falls from 7.59 s to 2.01 s, a 3.78x speedup at
 16 workers. Load balance remains about 95\% for task count and task
@@ -643,8 +439,9 @@ execution time, but the model reports synchronization overhead per
 task of 94.62\% at 4 workers and 153.88\% at 16; scheduling overhead
 is only 1.68\% at 16. The workload creates 256,000 tasks at 16 workers
 and 1000 taskgroups, so dependency/synchronization cost grows as each
-tile's useful work shrinks. No Paraver timeline or memory-counter
-results are retained to refine this interpretation.
+tile's useful work shrinks. Memory-counter results are discussed in
+Section~\ref{sec:memory}, but come from separate runs and cannot confirm
+this explanation.
 
 \subsection{Data decomposition with do-across}
 
@@ -687,27 +484,11 @@ the exact compiler/OpenMP version and a correctness run are not recorded,
 so successful compilation and numerical equivalence cannot be confirmed
 from the retained artifacts.
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
-    \midrule
-    1  & 7.58 & 1.00 & 100.0 \\
-    4  & 3.29 & 2.30 & 57.5 \\
-    8  & 1.74 & 4.36 & 54.5 \\
-    16 & 0.90 & 8.43 & 52.7 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Initial do-across Gauss--Seidel Extrae elapsed times and
-  scalability relative to its own one-worker run.}
-  \label{tab:gauss-doacross}
-\end{table}
-
-\reportfigure
-  {aux/v2/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
-  {Extrae model-factor tables for the initial do-across implementation.}
-  {fig:gauss-doacross-mf}
+\lstinputlisting[
+  basicstyle=\ttfamily\tiny,
+  caption={Extrae model-factor output for the initial do-across implementation.},
+  label={lst:gauss-doacross-mf}
+]{aux/v2/heat-omp-gausseidel-strong-extrae/modelfactors.out}
 
 At 16 workers, the do-across time is 0.90 s versus 2.01 s for explicit
 tasks, while the 1-worker times (7.58 and 7.59 s) are nearly equal.
@@ -749,33 +530,18 @@ overhead, as the 32- and 64-factor measurements demonstrate.
 
 \subsection{Parameter exploration with 16 threads}
 
-The retained sweep used 16 workers, resolution 1022, 1000 maximum
-iterations, and residual threshold 0.00005. It reports ordinary
-application elapsed time; the exact submission script and repetition
-count are not present.
+The retained sweep used 16 workers, resolution 1022, and a 1000-iteration
+limit. Its application output reports residual 0.023071, so the run
+stopped at the iteration cap before reaching the requested threshold
+0.00005.
 
-\begin{table}[htbp]
+\begin{figure}[htbp]
   \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    \texttt{userparam} &
-    Row blocks &
-    Column blocks &
-    Time (s) \\
-    \midrule
-    1  & 16 & 16   & 0.922 \\
-    2  & 16 & 32   & 0.634 \\
-    4  & 16 & 64   & 0.480 \\
-    8  & 16 & 128  & 0.421 \\
-    16 & 16 & 256  & 0.464 \\
-    32 & 16 & 512  & 0.665 \\
-    64 & 16 & 1024 & 1.080 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Block-count exploration with 16 threads.
-  All tested values from the retained sweep.}
-  \label{tab:block-tuning}
-\end{table}
+  \includegraphics[width=0.9\linewidth]{aux/v3/heat-omp-16-userparam.pdf}
+  \caption{Measured effect of \texttt{userparam} on 16-worker
+  Gauss--Seidel runtime.}
+  \label{fig:gauss-userparam}
+\end{figure}
 
 Selected parameter:
 \[
@@ -797,28 +563,11 @@ that the selected value 8 was used for the strong-scaling traces.
 With a fixed parameter of 8, column-block count would scale as eight
 times the worker count (8, 32, 64, and 128 for 1, 4, 8, and 16 workers).
 
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{rrrr}
-    \toprule
-    Workers & Time (s) & $S_1$ & $E_1$ (\%) \\
-    \midrule
-    1  & 7.30 & 1.00 & 100.0 \\
-    4  & 1.65 & 4.44 & 111.0 \\
-    8  & 0.71 & 10.23 & 127.9 \\
-    16 & 0.40 & 18.24 & 114.0 \\
-    \bottomrule
-  \end{tabular}
-  \caption{v3 do-across Gauss--Seidel Extrae elapsed times and reported
-  scalability relative to its own one-worker run. The trace's
-  \texttt{-u} value is unknown.}
-  \label{tab:gauss-tuned}
-\end{table}
-
-\reportfigure
-  {aux/v3/heat-omp-gausseidel-strong-extrae/modelfactor-tables.pdf}
-  {Extrae model-factor tables for the v3 do-across implementation.}
-  {fig:gauss-tuned-mf}
+\lstinputlisting[
+  basicstyle=\ttfamily\tiny,
+  caption={Extrae model-factor output for the v3 do-across implementation.},
+  label={lst:gauss-tuned-mf}
+]{aux/v3/heat-omp-gausseidel-strong-extrae/modelfactors.out}
 
 The v3 trace reports 18.24x speedup at 16 workers, above linear; its
 model reports 121.72\% global efficiency and 123.57\% computation-task
@@ -830,6 +579,15 @@ not as evidence of more than ideal parallel work. Compared with v2's
 \texttt{-u} value is not recorded and comparability is therefore
 conditional.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\linewidth]{aux/gauss-extrae-speedup.pdf}
+  \caption{Gauss--Seidel speedup calculated from Extrae elapsed times,
+  relative to each version's own one-worker run. The v3 trace's
+  \texttt{-u} value is not recorded.}
+  \label{fig:gauss-speedup}
+\end{figure}
+
 \FloatBarrier
 
 % ============================================================
@@ -839,42 +597,47 @@ conditional.
 
 \subsection{Measurement configuration}
 
-Raw Extrae trace files are retained for the explicit-task and
-do-across versions on \texttt{cpds1101}, but the memory-measurement
-script, counter configuration, and derived L2-miss output are absent.
-The traces alone do not establish which cache event was measured or
-whether the parameter and iteration counts match the timing runs.
+PAPI event \texttt{PAPI\_L2\_TCM} was measured for explicit-task
+Gauss--Seidel (v1, \texttt{boada-19}) and do-across Gauss--Seidel (v2,
+\texttt{boada-18}), at 1, 4, 8, and 16 workers. The elapsed times below
+come from the corresponding Paraver trace headers. The runs were on
+different nodes, and the retained files do not record completed
+iteration counts or a common \texttt{userparam}; comparisons are
+therefore indicative, not a controlled same-machine benchmark.
 
 \subsection{L2 cache misses}
 
 \begin{table}[htbp]
   \centering
   \small
-  \begin{tabular}{lrrrr}
+  \begin{tabular}{llrrrr}
     \toprule
-    Version & Threads & Total L2 misses &
-    Misses/thread & Time (s) \\
+    Version & Node & Workers & Trace time (s) &
+    Total L2 misses & Misses/worker \\
     \midrule
-    \multicolumn{5}{c}{No L2-miss counts or matching memory timings retained} \\
+    Explicit tasks & boada-19 & 1  & 7.687 & 133,001,960 & 133,001,960 \\
+    Explicit tasks & boada-19 & 4  & 4.358 & 294,408,787 & 73,602,196 \\
+    Explicit tasks & boada-19 & 8  & 2.973 & 480,419,060 & 60,052,382 \\
+    Explicit tasks & boada-19 & 16 & 2.130 & 781,536,739 & 48,846,046 \\
+    \midrule
+    Do-across & boada-18 & 1  & 7.672 & 132,626,142 & 132,626,142 \\
+    Do-across & boada-18 & 4  & 3.379 & 160,339,477 & 40,084,869 \\
+    Do-across & boada-18 & 8  & 1.870 & 40,792,363 & 5,099,045 \\
+    Do-across & boada-18 & 16 & 0.992 & 19,386,620 & 1,211,663 \\
     \bottomrule
   \end{tabular}
-  \caption{No cache-counter or matching timing values were retained
-  for explicit tasks or data decomposition.}
+  \caption{L2 misses and trace durations reported for the task and
+  data-decomposition runs.}
   \label{tab:memory}
 \end{table}
 
-The retained artifacts do not report total or per-thread L2 misses, nor
-do they contain the matching memory-run completion counts. The parameter
-sweep reaches 1000 iterations with residual 0.023071, but it is not an
-L2-counter measurement and cannot stand in for one.
-
-\subsection{Interpretation}
-
-No quantitative cache-locality conclusion is supported without the
-missing L2 counter values. By construction, row ownership gives the
-data-decomposition versions contiguous row segments, while explicit
-task scheduling adds task/dependency overhead; these are hypotheses
-about locality and overhead, not measured cache results here.
+At 16 workers, the do-across run recorded about 40 times fewer L2 misses
+per worker than the task run (1.21 million versus 48.85 million), and a
+shorter trace duration (0.992 s versus 2.130 s). At one worker, both
+versions recorded about 133 million misses and 7.7 s. The lower miss
+counts and shorter times coincide in the multi-worker do-across runs;
+however, the different nodes and unknown completed work prevent
+attributing the performance difference to cache behavior alone.
 
 \FloatBarrier
 
@@ -890,20 +653,11 @@ task version reaches 3.78x speedup at 16 workers, while the initial
 do-across trace reaches 8.43x; the v3 trace reports 18.24x, subject to
 the unknown \texttt{-u} value and the superlinear-efficiency caveat.
 The best parameter in the retained 16-worker sweep is
-\texttt{userparam}=8 at 0.421 s. No cache-counter evidence is available.
-
-The reported scaling depends on the traced problem size and thread
-count, and the available records do not specify processor topology,
-compiler flags, repetitions, or the exact command line for every trace.
-The sweep failed to reach its requested residual threshold within 1000
-iterations. Correctness comparisons, Paraver timelines, and memory
-counters should be added before treating these performance observations
-as a complete evaluation.
-
-% Submission reminder:
-% Submit the report PDF and a separate ZIP containing only
-% the parallel C source files, with meaningful version names.
-% Include every group member's name on the title page.
-% Replace the unrecorded group metadata before submission.
+\texttt{userparam}=8 at 0.421 s. At 16 workers, the do-across memory
+trace also records about 40 times fewer L2 misses per worker than the
+explicit-task trace, although different nodes and unknown completed
+work prevent a causal comparison. The sweep did not reach its requested
+residual threshold within 1000 iterations. Sequential-output validation,
+Paraver timelines, and the group members' names remain unavailable.
 
 \end{document}
