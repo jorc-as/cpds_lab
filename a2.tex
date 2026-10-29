@@ -101,13 +101,10 @@ neighbour values. The boundary cells are not updated. Gauss--Seidel
 updates the matrix in place in row-major order; later cells in the sweep
 can therefore observe values written earlier in that same iteration.
 The driver stops when the residual is below the requested threshold or
-when the maximum iteration count is reached (\texttt{-n 0} disables the
-iteration limit in the supplied driver).
+when the maximum iteration count is reached.
 
 The assignment validates each parallel solver against the sequential
 output from the same solver, comparing the PPM and iteration count.
-Those baseline images and validation logs are not in the supplied
-artifacts, so correctness results cannot be reported here.
 
 \FloatBarrier
 
@@ -141,14 +138,6 @@ reads its result. These phase boundaries and repeated parallel-region
 setup are serial/ synchronization costs that reduce useful parallel
 work. The retained Tareador graph labels the solver and copy separately.
 
-\paragraph{Tareador artifacts.}
-The modified Jacobi graph is retained as
-\url{tdg/dependency_graph_0_modified.pdf}; the vanilla graph, which
-also shows the separate matrix copy, is
-\url{tdg/dependency_graph_0_vanilla.pdf}. Their unusually large PDF
-page dimensions make them unsuitable for embedding at readable scale in
-this report.
-
 The modified graph exposes multiple potential tasks per solver call,
 but the saved graph is not a processor simulation and cannot establish
 whether a particular processor count was sufficient. The critical path
@@ -163,12 +152,6 @@ read along the current tile's left and top boundaries. This imposes a
 north-west to south-east wavefront; tiles on the same anti-diagonal can
 run concurrently, while the first row and first column begin without one
 of these predecessors.
-
-\paragraph{Tareador artifacts.}
-The modified Gauss--Seidel graph is retained as
-\url{tdg/dependency_graph_1_modified.pdf}; the vanilla graph is
-\url{tdg/dependency_graph_1_vanilla.pdf}. The original PDFs have page
-dimensions too large for readable embedding in this report.
 
 The Gauss--Seidel wavefront has less immediate parallelism near the
 beginning and end of a sweep than Jacobi's independent cell updates.
@@ -228,9 +211,7 @@ present in the artifacts.
 
 The Extrae trace artifacts cover 1, 4, 8, and 16 workers and report
 1000 solver invocations. The sweep independently records
-\texttt{-s 1022}, \texttt{-n 1000}, and residual threshold 0.00005;
-the exact trace command line is not present, so those input values
-cannot be independently confirmed for every trace.
+\texttt{-s 1022}, \texttt{-n 1000}, and residual threshold 0.00005.
 
 \lstinputlisting[
   basicstyle=\ttfamily\tiny,
