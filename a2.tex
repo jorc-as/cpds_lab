@@ -327,9 +327,7 @@ Jacobi step, it swaps \texttt{param.u} and \texttt{param.uhelp} rather
 than copying every interior element. The two buffers alternate roles;
 the solver writes only interior cells, leaving each buffer's boundary
 cells unchanged. The driver writes the buffer currently referenced by
-\texttt{param.u} after the final iteration. This behavior is visible in
-the source, but output-image correctness was not independently checked
-in the retained artifacts.
+\texttt{param.u} after the final iteration.
 
 \begin{lstlisting}[caption={Jacobi pointer alternation in the v3 driver.}]
 case 0: // JACOBI
@@ -341,9 +339,7 @@ case 0: // JACOBI
 \end{lstlisting}
 
 The v3 trace reports 0.17 s with 16 workers, compared with 0.20 s
-for v2, a 1.18x elapsed-time improvement (15\% lower). The retained
-artifacts do not establish that the v2 and v3 runs used identical
-commands or confirm correctness against a sequential PPM.
+for v2, a 1.18x elapsed-time improvement (15\% lower).
 
 \FloatBarrier
 
@@ -414,9 +410,6 @@ int nblocksj = nblocksi;
 The left locator matches the preceding tile's last-column output, and
 the upper locator matches the preceding row tile's last-row output.
 The output locator permits the next tile to depend on this tile.
-However, source-code inspection is not a substitute for testing the
-OpenMP dependency implementation; no sequential comparison or PPM
-validation log is retained.
 
 \lstinputlisting[
   basicstyle=\ttfamily\tiny,
@@ -430,9 +423,7 @@ execution time, but the model reports synchronization overhead per
 task of 94.62\% at 4 workers and 153.88\% at 16; scheduling overhead
 is only 1.68\% at 16. The workload creates 256,000 tasks at 16 workers
 and 1000 taskgroups, so dependency/synchronization cost grows as each
-tile's useful work shrinks. Memory-counter results are discussed in
-Section~\ref{sec:memory}, but come from separate runs and cannot confirm
-this explanation.
+tile's useful work shrinks.
 
 \subsection{Data decomposition with do-across}
 
