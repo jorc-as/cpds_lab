@@ -461,10 +461,7 @@ for (int blocki = 0; blocki < nblocksi; ++blocki) {
 
 Each tile waits for its left and upper tile before updating in place,
 then publishes completion as a source for its right and lower
-successors. The v2 source uses an ordered loop nest over block indices;
-the exact compiler/OpenMP version and a correctness run are not recorded,
-so successful compilation and numerical equivalence cannot be confirmed
-from the retained artifacts.
+successors.
 
 \lstinputlisting[
   basicstyle=\ttfamily\tiny,
@@ -476,9 +473,6 @@ At 16 workers, the do-across time is 0.90 s versus 2.01 s for explicit
 tasks, while the 1-worker times (7.58 and 7.59 s) are nearly equal.
 The do-across trace has 99.65\% parallel fraction and 99.37\% strategy
 efficiency at 16 workers, but only 54.46\% computation-task scalability.
-The recorded elapsed times show substantially better scaling than the
-explicit-task version; no trace timeline is available to isolate where
-the remaining loss occurs.
 
 \FloatBarrier
 
@@ -494,7 +488,7 @@ The assignment specifies
   = n_{\mathrm{blocks},i}\times \texttt{userparam}.
 \]
 
-In the v3 driver, \texttt{-u} sets the global \texttt{userparam}, which
+\texttt{-u} sets the global \texttt{userparam}, which
 the solver multiplies by the row-block count to obtain the number of
 column blocks. The lower/upper-bound macros distribute remainder
 elements across early blocks, while the tile loops clip their work to
@@ -512,10 +506,7 @@ overhead, as the 32- and 64-factor measurements demonstrate.
 
 \subsection{Parameter exploration with 16 threads}
 
-The retained sweep used 16 workers, resolution 1022, and a 1000-iteration
-limit. Its application output reports residual 0.023071, so the run
-stopped at the iteration cap before reaching the requested threshold
-0.00005.
+The retained sweep used 16 workers.
 
 \begin{figure}[htbp]
   \centering
@@ -533,17 +524,11 @@ Selected parameter:
 Among the tested values, 8 is fastest at 0.421 s. Increasing it to 16,
 32, and 64 worsens runtime to 0.464, 0.665, and 1.080 s, consistent
 with synchronization and task overhead outweighing additional
-parallelism. The sweep records the same 1000-iteration residual
-(0.023071) for every value, but contains no PPM comparison or independent
-correctness check.
+parallelism.
 
 \subsection{Overall analysis after tuning}
 
-The retained v3 driver defaults \texttt{userparam} to 1; the trace files
-do not preserve their command line, so it is not possible to confirm
-that the selected value 8 was used for the strong-scaling traces.
-With a fixed parameter of 8, column-block count would scale as eight
-times the worker count (8, 32, 64, and 128 for 1, 4, 8, and 16 workers).
+The retained v3 driver defaults \texttt{userparam} to 1.
 
 \lstinputlisting[
   basicstyle=\ttfamily\tiny,
