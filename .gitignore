@@ -10,3 +10,4 @@
 
 # Raw Paraver trace files can be very large; retain summaries and configs.
 *.prv
+.DS_Store

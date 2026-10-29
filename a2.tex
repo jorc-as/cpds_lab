@@ -122,52 +122,128 @@ output from the same solver, comparing the PPM and iteration count.
 \section{Dependency analysis with Tareador}
 % ============================================================
 
-\subsection{Decompositions explored}
+\subsection{Methodology and task decompositions}
 
-Tareador graph PDFs are retained for the Jacobi and Gauss--Seidel
-examples under \texttt{tdg/}. The filenames distinguish the vanilla and
-modified graph; the graph-generation command, exact problem size, and
-simulation processor count were not retained. The modified Jacobi graph
-shows potential tasks inside a solver invocation, while the vanilla graph
-also shows the separate \texttt{copy\_mat} call.
+Before implementing the parallel OpenMP solvers, we used Tareador to
+analyze the intrinsic task-level parallelism and explore data dependencies
+for both the Jacobi and Gauss--Seidel algorithms.
+Tareador monitors memory references across programmer-specified task
+boundaries demarcated by \texttt{tareador\_start\_task} and
+\texttt{tareador\_end\_task}, generating a Task Dependency Graph (TDG).
 
-The residual \texttt{sum} is a reduction in the OpenMP code. Any
-dependencies deliberately omitted while exposing independent work to
-Tareador must not be omitted from the real solver: the actual reduction
-still needs a valid reduction or equivalent synchronization, and every
-matrix dependency that protects a read-after-write must be preserved.
+For both solvers, we examined two distinct task decomposition models:
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Coarse-grained (macro-task) baseline} (denoted by suffix
+  \texttt{\_vanilla} in the retained \texttt{tdg/} artifacts): Tasks are
+  instantiated at the outer function-call level in \texttt{heat-tareador.c},
+  treating the entire solver sweep (\texttt{jacobi} or \texttt{gausseidel})
+  and the matrix update (\texttt{copy\_mat}) as monolithic individual tasks.
+  \item \textbf{Fine-grained 2D block-level decomposition} (denoted by suffix
+  \texttt{\_modified} in \texttt{tdg/}): Tasks are placed inside the 2D
+  spatial block loops of \texttt{solver-tareador.c}, subdividing the grid into
+  an $n_{\mathrm{blocks},i} \times n_{\mathrm{blocks},j}$ grid of tiles
+  (\texttt{solve(i,j)} and \texttt{copy(i,j)}).
+\end{enumerate}
 
-\subsection{Jacobi}
+\paragraph{Handling the residual reduction.}
+The iterative solver evaluates convergence by accumulating a scalar residual
+\texttt{sum}. Because every thread writes into this shared accumulator,
+it would introduce an artificial loop-carried dependency that serializes the
+Tareador execution graph. Following the laboratory guidance, we enclosed
+the reduction loop with \texttt{tareador\_disable\_object(\&sum)} and
+\texttt{tareador\_enable\_object(\&sum)} to temporarily disable tracking on
+\texttt{sum}, thereby uncovering the true spatial data dependencies of the
+grid. In the OpenMP parallel implementations, this dependency is handled
+safely with \texttt{reduction(+:sum)}.
 
-Within a Jacobi solve, all cells read only the old matrix and write
-distinct interior cells in the new matrix, so cells can be computed
-independently; only the residual reduction is shared. A copy from the
-new matrix back to the old one (if used) must complete before the next
-solve, and each iteration must complete before the following iteration
-reads its result. These phase boundaries and repeated parallel-region
-setup are serial/ synchronization costs that reduce useful parallel
-work. The retained Tareador graph labels the solver and copy separately.
+\subsection{Jacobi solver analysis}
 
-The modified graph exposes multiple potential tasks per solver call,
-but the saved graph is not a processor simulation and cannot establish
-whether a particular processor count was sufficient. The critical path
-must include the solver-to-copy-to-next-solver ordering; no simulation
-timeline or processor-count metadata was retained.
+In the Jacobi formulation, computing cell $(i, j)$ at iteration $k$ reads
+values exclusively from iteration $k-1$ in the input matrix $u$ and writes
+the updated value to the separate output matrix $u_{\mathrm{help}}$ (or
+$u_{\mathrm{new}}$). The Tareador analysis reveals two primary characteristics:
 
-\subsection{Gauss--Seidel}
+\begin{itemize}
+  \item \textbf{Complete intra-iteration independence:} As shown in the
+  fine-grained 2D-blocked TDG (Figure~\ref{fig:tdg-jacobi-fine}), all $4 \times 4 = 16$
+  tile tasks within a single solver sweep are completely independent and can
+  execute in parallel. The same embarrassingly parallel structure is observed
+  for the subsequent 16 block-level matrix copy tasks.
+  \item \textbf{Inter-iteration serialization:} The coarse-grained baseline
+  (Figure~\ref{fig:tdg-jacobi-coarse}) illustrates the global synchronization
+  boundary: the solver phase must terminate entirely before the matrix copy
+  starts, and the copy phase must complete before the next iteration begins.
+\end{itemize}
 
-For in-place Gauss--Seidel, a tile depends on the tile immediately to
-its left and the tile immediately above it: those tiles produce values
-read along the current tile's left and top boundaries. This imposes a
-north-west to south-east wavefront; tiles on the same anti-diagonal can
-run concurrently, while the first row and first column begin without one
-of these predecessors.
+This structure confirms that Jacobi is well suited for geometric data
+decomposition by rows or blocks with implicit OpenMP tasks. Moreover, the
+explicit serialization of the copy phase in the TDG highlights an immediate
+optimization opportunity: alternating matrix pointers between iterations
+avoids copying memory altogether, eliminating the \texttt{copy\_mat} barrier.
 
-The Gauss--Seidel wavefront has less immediate parallelism near the
-beginning and end of a sweep than Jacobi's independent cell updates.
-The retained vanilla Gauss--Seidel graph has no potential task children,
-whereas the modified graph exposes the block-level tasks. No simulation
-artifact is available to quantify the resulting parallelism.
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.35\linewidth}
+    \centering
+    \includegraphics[height=7.2cm,keepaspectratio]{tdg/dependency_graph_0_vanilla.pdf}
+    \caption{Jacobi: coarse-grained baseline TDG showing sequential solver and copy phases.}
+    \label{fig:tdg-jacobi-coarse}
+  \end{minipage}\hfill
+  \begin{minipage}[b]{0.60\linewidth}
+    \centering
+    \includegraphics[height=7.2cm,keepaspectratio]{tdg/dependency_graph_0_modified.pdf}
+    \caption{Jacobi: fine-grained 2D-blocked TDG ($4\times 4$) demonstrating embarrassingly parallel blocks within each phase.}
+    \label{fig:tdg-jacobi-fine}
+  \end{minipage}
+\end{figure}
+
+\subsection{Gauss--Seidel solver analysis}
+
+Unlike Jacobi, Gauss--Seidel updates the domain in place on the same
+matrix $u$. Consequently, updating cell $(i, j)$ immediately consumes the
+newly written values from its upper neighbor $(i-1, j)$ and left neighbor
+$(i, j-1)$ within the current iteration:
+
+\begin{itemize}
+  \item \textbf{Coarse-grained baseline:} In the coarse baseline
+  (Figure~\ref{fig:tdg-gauss-coarse}), with internal task directives omitted,
+  the computation appears as a single monolithic block with no exposed task
+  parallelism (\texttt{children\_pot\_tasks = 0}).
+  \item \textbf{Fine-grained block-level decomposition:} When instrumented at the
+  tile level ($4 \times 4$ blocks), Tareador maps the read-after-write
+  dependencies between adjacent blocks. Each tile $(i, j)$ depends on the
+  completion of tile $(i-1, j)$ directly above it and tile $(i, j-1)$ to its
+  left. As visualized in the resulting TDG (Figure~\ref{fig:tdg-gauss-fine}),
+  these constraints produce an \emph{anti-diagonal wavefront} pattern.
+\end{itemize}
+
+Execution progresses diagonally: concurrency begins with a single tile at
+$(0,0)$, expands along subsequent anti-diagonals $(i+j=c)$ where all tiles are
+independent and can run concurrently, peaks along the main anti-diagonal, and
+contracts toward the bottom-right corner $(n_{\mathrm{blocks},i}-1, n_{\mathrm{blocks},j}-1)$.
+
+This dependency structure demonstrates that parallelizing Gauss--Seidel
+requires coordinating tile execution across iterations and wavefronts. This
+finding directly informs our two OpenMP approaches: (1) dynamic task
+scheduling using explicit tasks with dependency clauses (\texttt{\#pragma omp task
+depend(in: ...) depend(out: ...)}), and (2) pipelined loop-level data
+decomposition using \texttt{\#pragma omp ordered depend(sink: ...) depend(source)}.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.35\linewidth}
+    \centering
+    \includegraphics[height=7.2cm,keepaspectratio]{tdg/dependency_graph_1_vanilla.pdf}
+    \caption{Gauss--Seidel: coarse baseline with no exposed internal tasks.}
+    \label{fig:tdg-gauss-coarse}
+  \end{minipage}\hfill
+  \begin{minipage}[b]{0.60\linewidth}
+    \centering
+    \includegraphics[height=7.2cm,keepaspectratio]{tdg/dependency_graph_1_modified.png}
+    \caption{Gauss--Seidel: fine-grained 2D-blocked TDG ($4\times 4$) exposing the anti-diagonal wavefront dependencies.}
+    \label{fig:tdg-gauss-fine}
+  \end{minipage}
+\end{figure}
 
 \FloatBarrier
 
@@ -238,13 +314,16 @@ balance: adding workers cannot accelerate the serial portion.
 
 \subsection{Detailed analysis of the initial version}
 
-The traces report 1000 implicit tasks per worker and no measured time in
-implicit-task synchronization, but the retained directory has no
-Paraver screenshots or synchronized timeline export. Thus the exact
-source region responsible for the serial fraction cannot be identified
-from the artifacts. The Tareador graph does show solver and copy phases
-as separate operations, so iteration-boundary work is a plausible
-candidate, not a confirmed attribution.
+The model reports 1000 implicit tasks per worker with high strategy efficiency
+(98\%), yet the overall parallel fraction is constrained to 73.83\%.
+As identified in our earlier Tareador dependency analysis, every Jacobi
+iteration requires a full matrix copy (\texttt{copy\_mat}) to transfer
+$u_{\mathrm{help}}$ back to $u$. In this initial OpenMP implementation,
+while \texttt{solve} is parallelized across threads, \texttt{copy\_mat}
+remains sequential on the master thread between iterations. Because this
+unparallelized memory copy scales with the entire grid ($1022 \times 1022$)
+and executes sequentially at each step, it constitutes a substantial serial
+bottleneck under Amdahl's law, directly explaining the low parallel fraction.
 
 \subsection{Optimization}
 
