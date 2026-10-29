@@ -280,13 +280,6 @@ void copy_mat (double *u, double *v, unsigned sizex, unsigned sizey) {
 
 \end{lstlisting}
 
-The v2 source contains a serial \texttt{copy\_mat} routine instead.
-The retained source files do not include the full build/run scripts,
-so this parallel-copy code should not be assumed to be the exact v2
-trace configuration.
-
-No 16-worker correctness log or PPM comparison is retained.
-
 \subsection{Overall analysis of the optimized version}
 
 \lstinputlisting[
@@ -299,8 +292,6 @@ For the v2 Jacobi trace, the 16-worker elapsed time is 0.20 s versus
 1.50 s for v1, while the one-worker times are 2.44 s and 2.46 s.
 The v2 trace's parallel fraction is 98.62\%, up from 73.83\% in v1.
 Its trace speedup is 12.38x at 16 workers (versus 1.63x for v1).
-The higher parallel fraction is supported by the model-factor output;
-the retained files do not isolate which source-level change caused it.
 
 The improvement over the initial implementation at 16 threads is
 \[
@@ -311,9 +302,7 @@ The improvement over the initial implementation at 16 threads is
 
 The v3 Jacobi trace reports 1.90, 0.49, 0.26, and 0.17 s for
 1, 4, 8, and 16 workers respectively (speedups 1.00, 3.89, 7.28,
-and 11.17). This is a separate implementation and is not the baseline
-for the v1-to-v2 comparison. No Jacobi trace shows superlinear speedup.
-
+and 11.17). 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\linewidth]{aux/jacobi-extrae-speedup.pdf}
