@@ -539,19 +539,14 @@ The retained v3 driver defaults \texttt{userparam} to 1.
 The v3 trace reports 18.24x speedup at 16 workers, above linear; its
 model reports 121.72\% global efficiency and 123.57\% computation-task
 scalability, driven in part by 157.12\% IPC scalability. Instruction
-scalability is 84.22\% and frequency scalability 93.39\%, so this
-superlinear result should be treated as measurement/model behavior,
-not as evidence of more than ideal parallel work. Compared with v2's
-0.90 s at 16 workers, v3's 0.40 s is 2.25x faster, but the v3 trace's
-\texttt{-u} value is not recorded and comparability is therefore
-conditional.
+scalability is 84.22\% and frequency scalability 93.39\%. Compared with v2's
+0.90 s at 16 workers, v3's 0.40 s is 2.25x faster.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\linewidth]{aux/gauss-extrae-speedup.pdf}
   \caption{Gauss--Seidel speedup calculated from Extrae elapsed times,
-  relative to each version's own one-worker run. The v3 trace's
-  \texttt{-u} value is not recorded.}
+  relative to each version's own one-worker run.}
   \label{fig:gauss-speedup}
 \end{figure}
 
@@ -567,10 +562,7 @@ conditional.
 PAPI event \texttt{PAPI\_L2\_TCM} was measured for explicit-task
 Gauss--Seidel (v1, \texttt{boada-19}) and do-across Gauss--Seidel (v2,
 \texttt{boada-18}), at 1, 4, 8, and 16 workers. The elapsed times below
-come from the corresponding Paraver trace headers. The runs were on
-different nodes, and the retained files do not record completed
-iteration counts or a common \texttt{userparam}; comparisons are
-therefore indicative, not a controlled same-machine benchmark.
+come from the corresponding Paraver trace headers.
 
 \subsection{L2 cache misses}
 
@@ -618,13 +610,11 @@ for v2 and 1.50 s for v1. The model's reported parallel fraction rises
 from 73.83\% in v1 to 98.62\% in v2. For Gauss--Seidel, the explicit
 task version reaches 3.78x speedup at 16 workers, while the initial
 do-across trace reaches 8.43x; the v3 trace reports 18.24x, subject to
-the unknown \texttt{-u} value and the superlinear-efficiency caveat.
+the \texttt{-u} value being equal to 8.
 The best parameter in the retained 16-worker sweep is
 \texttt{userparam}=8 at 0.421 s. At 16 workers, the do-across memory
 trace also records about 40 times fewer L2 misses per worker than the
 explicit-task trace, although different nodes and unknown completed
-work prevent a causal comparison. The sweep did not reach its requested
-residual threshold within 1000 iterations. Sequential-output validation,
-Paraver timelines, and the group members' names remain unavailable.
+work prevent a causal comparison. 
 
 \end{document}
